@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 视频生成 - 阿里云百炼测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .main-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.4);
+        }
+
+        .preview-container {
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 2px dashed #dee2e6;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .preview-container.has-content {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .image-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .video-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress {
+            height: 8px;
+            border-radius: 10px;
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .progress-bar {
+            background: var(--success-gradient);
+            border-radius: 10px;
+        }
+
+        .alert {
+            border: none;
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            color: #667eea;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.1));
+            color: #4facfe;
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(240, 147, 251, 0.1), rgba(245, 87, 108, 0.1));
+            color: #f5576c;
+        }
+
+        .model-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-badge {
+            display: inline-block;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin: 0.25rem;
+        }
+
+        .sticky-preview {
+            position: sticky;
+            top: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin-top: 1rem;
+                padding: 0 1rem;
+            }
+            
+            .sticky-preview {
+                position: relative;
+                top: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-video me-2"></i>
+                🚀 阿里云百炼测试平台
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="videoDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-play-circle me-1"></i>
+                            🎬 视频生成
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="switchTaskType('i2v-first-frame')">
+                                <i class="fas fa-image me-2"></i>🖼️ 基于首帧
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchTaskType('i2v-keyframes')">
+                                <i class="fas fa-images me-2"></i>🎭 基于首尾帧
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/history">
+                            <i class="fas fa-history me-1"></i>
+                            📋 历史记录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container main-container" style="margin-top: 100px;">
+        <div class="row">
+            <!-- 左侧：输入表单 -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header text-center">
+                        <h3 class="mb-0">
+                            <i class="fas fa-magic me-2"></i>
+                            <span id="page-title">🎨 通义万相 - 图生视频</span>
+                        </h3>
+                    </div>
+                    
+                    <div class="card-body p-4">
+                        <!-- 任务类型和模型选择 -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label">
+                                    <i class="fas fa-cogs me-1"></i>
+                                    🎯 任务类型
+                                </label>
+                                <select class="form-select" id="taskType" onchange="onTaskTypeChange()">
+                                    <option value="i2v-first-frame">🖼️ 基于首帧生成</option>
+                                    <option value="i2v-keyframes">🎭 基于首尾帧生成</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label class="form-label">
+                                    <i class="fas fa-brain me-1"></i>
+                                    🤖 选择模型
+                                </label>
+                                <select class="form-select" id="model" onchange="onModelChange()">
+                                    <option value="wanx2.1-i2v-turbo">⚡ wanx2.1-i2v-turbo (快速模式)</option>
+                                    <option value="wanx2.1-i2v-plus">✨ wanx2.1-i2v-plus (高质量模式)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 模型信息 -->
+                        <div class="model-info mb-4">
+                            <div id="model-description">
+                                <strong>⚡ wanx2.1-i2v-turbo:</strong> 
+                                基于首帧图片生成视频，处理速度快，适合快速预览和测试。
+                                <div class="mt-2">
+                                    <span class="feature-badge">🚀 3-5秒时长</span>
+                                    <span class="feature-badge">📺 480P/720P</span>
+                                    <span class="feature-badge">⚡ 快速生成</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 文本提示词 -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-edit me-1"></i>
+                                💭 文本描述 * <small class="text-muted">(最多800字符)</small>
+                            </label>
+                            <textarea class="form-control" id="prompt" rows="4" maxlength="800"
+                                placeholder="请详细描述您希望生成的视频内容，包括动作、场景、风格等... 🎨&#10;例如：一只可爱的小猫在花园里追蝴蝶，阳光明媚，画面温馨 🐱🦋"></textarea>
+                            <div class="form-text">
+                                <span id="prompt-count">0</span>/800 字符 📝
+                                支持中英文，每个汉字/字母占一个字符，超过部分会自动截断。
+                            </div>
+                        </div>
+
+                        <!-- 图片URL输入 -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                🖼️ 首帧图片URL *
+                            </label>
+                            <input type="url" class="form-control" id="imageUrl" 
+                                placeholder="https://example.com/image.jpg" onchange="previewImage('imageUrl', 'imagePreview')">
+                            <div class="form-text">📎 请提供有效的图片URL地址（支持JPG、PNG、WebP格式）</div>
+                        </div>
+
+                        <!-- 结束帧图片URL（条件显示） -->
+                        <div class="mb-4" id="endImageContainer" style="display: none;">
+                            <label class="form-label">
+                                <i class="fas fa-link me-1"></i>
+                                🎬 结束帧图片URL *
+                            </label>
+                            <input type="url" class="form-control" id="endImageUrl" 
+                                placeholder="https://example.com/end-image.jpg" onchange="previewImage('endImageUrl', 'endImagePreview')">
+                            <div class="form-text">🎭 基于首尾帧模式需要提供结束帧图片</div>
+                        </div>
+
+                        <!-- 参数设置 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-clock me-1"></i>
+                                    ⏱️ 视频时长（秒）
+                                </label>
+                                <select class="form-select" id="duration">
+                                    <option value="3">3秒</option>
+                                    <option value="4">4秒</option>
+                                    <option value="5" selected>5秒</option>
+                                </select>
+                                <div class="form-text" id="duration-note">
+                                    ⚡ turbo: 3-5秒，✨ plus: 仅5秒
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">
+                                    <i class="fas fa-expand me-1"></i>
+                                    📺 分辨率
+                                </label>
+                                <select class="form-select" id="resolution">
+                                    <option value="480P">480P (640×480)</option>
+                                    <option value="720P" selected>720P (1280×720)</option>
+                                </select>
+                                <div class="form-text" id="resolution-note">
+                                    ⚡ turbo: 480P/720P，✨ plus: 仅720P
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 高级参数 -->
+                        <div class="card mb-4" style="background: rgba(102, 126, 234, 0.05); border: none;">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <i class="fas fa-cog me-2"></i>
+                                    ⚙️ 高级参数（可选）
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="promptExtend" checked>
+                                            <label class="form-check-label" for="promptExtend">
+                                                <strong>✨ 智能改写</strong>
+                                                <div class="form-text">🤖 使用大模型对提示词进行智能改写，提升生成效果</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">
+                                            <i class="fas fa-dice me-1"></i>
+                                            🎲 随机数种子
+                                        </label>
+                                        <input type="number" class="form-control" id="seed" 
+                                               placeholder="留空自动生成" min="0" max="2147483647">
+                                        <div class="form-text">🔒 固定种子可保持生成结果的稳定性</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="text-center mb-4">
+                            <button class="btn btn-primary me-3" onclick="generateVideo()">
+                                <i class="fas fa-play me-2"></i>
+                                🚀 开始生成视频
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="resetForm()">
+                                <i class="fas fa-redo me-2"></i>
+                                🔄 重置表单
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：预览区域 -->
+            <div class="col-lg-6">
+                <div class="sticky-preview">
+                    <!-- 图片预览 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-image me-2"></i>
+                                🖼️ 图片预览
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- 首帧预览 -->
+                            <div class="preview-container" id="imagePreview">
+                                <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">📸 首帧图片预览</p>
+                                <small class="text-muted">请输入图片URL进行预览</small>
+                            </div>
+
+                            <!-- 尾帧预览 -->
+                            <div class="preview-container" id="endImagePreview" style="display: none;">
+                                <i class="fas fa-images fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">🎬 尾帧图片预览</p>
+                                <small class="text-muted">请输入结束帧图片URL进行预览</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 生成进度和结果 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-play me-2"></i>
+                                🎬 生成结果
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- 默认状态 -->
+                            <div id="defaultState" class="preview-container text-center">
+                                <i class="fas fa-play-circle fa-3x text-muted mb-3"></i>
+                                <p class="text-muted mb-0">🎬 视频生成结果</p>
+                                <small class="text-muted">点击"开始生成视频"按钮开始创作 ✨</small>
+                            </div>
+
+                            <!-- 进度状态 -->
+                            <div id="progressContainer" style="display: none;">
+                                <div class="alert alert-info mb-3">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    <span id="status-text">🔄 正在创建任务...</span>
+                                </div>
+                                <div class="progress mb-3">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" style="width: 30%"></div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted">⏳ 预计需要1-3分钟，请耐心等待...</small>
+                                </div>
+                            </div>
+
+                            <!-- 成功结果 -->
+                            <div id="successContainer" style="display: none;">
+                                <div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    ✅ 视频生成成功！
+                                </div>
+                                <div id="videoResultContainer" class="text-center">
+                                    <!-- 视频将显示在这里 -->
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a id="downloadVideoBtn" href="#" class="btn btn-success" target="_blank">
+                                        <i class="fas fa-download me-2"></i>
+                                        💾 下载视频
+                                    </a>
+                                    <button class="btn btn-outline-primary ms-2" onclick="generateAnother()">
+                                        <i class="fas fa-plus me-2"></i>
+                                        ➕ 继续生成
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 错误状态 -->
+                            <div id="errorContainer" style="display: none;">
+                                <div class="alert alert-danger mb-3">
+                                    <i class="fas fa-exclamation-circle me-2"></i>
+                                    <span id="error-text">❌ 生成失败</span>
+                                </div>
+                                <div class="text-center">
+                                    <button class="btn btn-primary" onclick="resetToDefault()">
+                                        <i class="fas fa-redo me-2"></i>
+                                        🔄 重新尝试
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTaskId = null;
+        let pollInterval = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFromUrl();
+            updatePromptCount();
+            
+            // 提示词计数
+            document.getElementById('prompt').addEventListener('input', updatePromptCount);
+        });
+
+        // 从URL参数初始化表单
+        function initializeFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('type')) {
+                document.getElementById('taskType').value = urlParams.get('type');
+                onTaskTypeChange();
+            }
+            
+            if (urlParams.get('model')) {
+                document.getElementById('model').value = urlParams.get('model');
+                onModelChange();
+            }
+            
+            if (urlParams.get('prompt')) {
+                document.getElementById('prompt').value = urlParams.get('prompt');
+                updatePromptCount();
+            }
+            
+            if (urlParams.get('duration')) {
+                document.getElementById('duration').value = urlParams.get('duration');
+            }
+            
+            if (urlParams.get('resolution')) {
+                document.getElementById('resolution').value = urlParams.get('resolution');
+            }
+            
+            if (urlParams.get('seed')) {
+                document.getElementById('seed').value = urlParams.get('seed');
+            }
+            
+            if (urlParams.get('prompt_extend') !== null) {
+                document.getElementById('promptExtend').checked = urlParams.get('prompt_extend') === 'true';
+            }
+        }
+
+        // 更新提示词计数
+        function updatePromptCount() {
+            const prompt = document.getElementById('prompt').value;
+            const count = [...prompt].length; // 支持emoji等多字节字符
+            document.getElementById('prompt-count').textContent = count;
+            
+            if (count > 800) {
+                document.getElementById('prompt-count').style.color = '#dc3545';
+            } else if (count > 700) {
+                document.getElementById('prompt-count').style.color = '#fd7e14';
+            } else {
+                document.getElementById('prompt-count').style.color = '#6c757d';
+            }
+        }
+
+        // 任务类型变化
+        function onTaskTypeChange() {
+            const taskType = document.getElementById('taskType').value;
+            const endImageContainer = document.getElementById('endImageContainer');
+            const endImagePreview = document.getElementById('endImagePreview');
+            const pageTitle = document.getElementById('page-title');
+            
+            if (taskType === 'i2v-keyframes') {
+                endImageContainer.style.display = 'block';
+                endImagePreview.style.display = 'block';
+                pageTitle.textContent = '🎭 通义万相 - 首尾帧视频生成';
+                document.getElementById('model').value = 'wanx2.1-i2v-plus';
+            } else {
+                endImageContainer.style.display = 'none';
+                endImagePreview.style.display = 'none';
+                pageTitle.textContent = '🎨 通义万相 - 图生视频';
+            }
+            
+            onModelChange();
+        }
+
+        // 模型变化
+        function onModelChange() {
+            const model = document.getElementById('model').value;
+            const taskType = document.getElementById('taskType').value;
+            const description = document.getElementById('model-description');
+            const durationSelect = document.getElementById('duration');
+            const resolutionSelect = document.getElementById('resolution');
+            
+            if (model === 'wanx2.1-i2v-turbo') {
+                description.innerHTML = `
+                    <strong>⚡ wanx2.1-i2v-turbo:</strong> 
+                    基于首帧图片生成视频，处理速度快，适合快速预览和测试。
+                    <div class="mt-2">
+                        <span class="feature-badge">🚀 3-5秒时长</span>
+                        <span class="feature-badge">📺 480P/720P</span>
+                        <span class="feature-badge">⚡ 快速生成</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="3">3秒</option>
+                    <option value="4">4秒</option>
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 更新分辨率选项
+                resolutionSelect.innerHTML = `
+                    <option value="480P">480P (640×480)</option>
+                    <option value="720P" selected>720P (1280×720)</option>
+                `;
+                
+                // 首尾帧任务强制使用plus模型
+                if (taskType === 'i2v-keyframes') {
+                    document.getElementById('model').value = 'wanx2.1-i2v-plus';
+                    onModelChange();
+                    return;
+                }
+                
+            } else if (model === 'wanx2.1-i2v-plus') {
+                description.innerHTML = `
+                    <strong>✨ wanx2.1-i2v-plus:</strong> 
+                    高质量视频生成，支持首尾帧模式，生成效果更佳但耗时较长。
+                    <div class="mt-2">
+                        <span class="feature-badge">🎭 支持首尾帧</span>
+                        <span class="feature-badge">📺 720P高清</span>
+                        <span class="feature-badge">✨ 高质量</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 更新分辨率选项
+                resolutionSelect.innerHTML = `
+                    <option value="720P" selected>720P (1280×720)</option>
+                `;
+            }
+        }
+
+        // 切换任务类型
+        function switchTaskType(type) {
+            document.getElementById('taskType').value = type;
+            onTaskTypeChange();
+        }
+
+        // 预览图片
+        function previewImage(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            const url = input.value.trim();
+            
+            if (url && isValidImageUrl(url)) {
+                const img = new Image();
+                img.onload = function() {
+                    preview.innerHTML = `<img src="${url}" class="image-preview" alt="图片预览">`;
+                    preview.classList.add('has-content');
+                };
+                img.onerror = function() {
+                    preview.innerHTML = `
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                        <p class="text-warning mb-0">⚠️ 图片加载失败</p>
+                        <small class="text-muted">请检查URL是否正确或图片是否可访问</small>
+                    `;
+                    preview.classList.remove('has-content');
+                };
+                img.src = url;
+            } else if (url) {
+                preview.innerHTML = `
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <p class="text-warning mb-0">⚠️ 无效的图片URL</p>
+                    <small class="text-muted">请输入有效的图片地址</small>
+                `;
+                preview.classList.remove('has-content');
+            } else {
+                const defaultTexts = {
+                    'imagePreview': {
+                        icon: 'fas fa-image',
+                        title: '📸 首帧图片预览',
+                        subtitle: '请输入图片URL进行预览'
+                    },
+                    'endImagePreview': {
+                        icon: 'fas fa-images',
+                        title: '🎬 尾帧图片预览',
+                        subtitle: '请输入结束帧图片URL进行预览'
+                    }
+                };
+                
+                const defaultText = defaultTexts[previewId];
+                preview.innerHTML = `
+                    <i class="${defaultText.icon} fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">${defaultText.title}</p>
+                    <small class="text-muted">${defaultText.subtitle}</small>
+                `;
+                preview.classList.remove('has-content');
+            }
+        }
+
+        // 验证图片URL
+        function isValidImageUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const ext = urlObj.pathname.toLowerCase();
+                return ext.endsWith('.jpg') || ext.endsWith('.jpeg') || 
+                       ext.endsWith('.png') || ext.endsWith('.webp') || 
+                       ext.endsWith('.gif') || url.includes('image');
+            } catch {
+                return false;
+            }
+        }
+
+        // 生成视频
+        async function generateVideo() {
+            // 验证必填字段
+            const prompt = document.getElementById('prompt').value.trim();
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            const taskType = document.getElementById('taskType').value;
+            const endImageUrl = document.getElementById('endImageUrl').value.trim();
+            
+            if (!prompt) {
+                alert('❌ 请输入文本描述');
+                return;
+            }
+            
+            if (!imageUrl) {
+                alert('❌ 请输入首帧图片URL');
+                return;
+            }
+            
+            if (taskType === 'i2v-keyframes' && !endImageUrl) {
+                alert('❌ 基于首尾帧模式需要提供结束帧图片URL');
+                return;
+            }
+            
+            // 构建请求数据
+            const requestData = {
+                task_type: taskType,
+                model: document.getElementById('model').value,
+                prompt: prompt,
+                image_url: imageUrl,
+                duration: parseInt(document.getElementById('duration').value),
+                resolution: document.getElementById('resolution').value,
+                prompt_extend: document.getElementById('promptExtend').checked
+            };
+            
+            if (taskType === 'i2v-keyframes') {
+                requestData.end_image_url = endImageUrl;
+            }
+            
+            const seedValue = document.getElementById('seed').value.trim();
+            if (seedValue) {
+                requestData.seed = parseInt(seedValue);
+            }
+            
+            // 显示进度
+            showProgress('🔄 正在创建任务...');
+            
+            try {
+                const response = await fetch('/api/video/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    currentTaskId = result.task_id;
+                    updateProgress('🚀 任务已创建，正在生成视频...', 50);
+                    startPolling(currentTaskId);
+                } else {
+                    showError('创建任务失败: ' + result.error);
+                }
+            } catch (error) {
+                showError('网络错误: ' + error.message);
+            }
+        }
+
+        // 显示进度
+        function showProgress(message) {
+            document.getElementById('defaultState').style.display = 'none';
+            document.getElementById('successContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('status-text').textContent = message;
+        }
+
+        // 更新进度
+        function updateProgress(message, percentage) {
+            document.getElementById('status-text').textContent = message;
+            const progressBar = document.querySelector('.progress-bar');
+            progressBar.style.width = percentage + '%';
+        }
+
+        // 开始轮询
+        function startPolling(taskId) {
+            pollInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/video/status/${taskId}`);
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        const status = result.status;
+                        
+                        if (status === 'running') {
+                            updateProgress('🔄 视频生成中，请稍候...', 75);
+                        } else if (status === 'succeeded') {
+                            clearInterval(pollInterval);
+                            showSuccess(result.video_url);
+                        } else if (status === 'failed') {
+                            clearInterval(pollInterval);
+                            showError('生成失败: ' + (result.error || '未知错误'));
+                        }
+                    }
+                } catch (error) {
+                    console.error('轮询错误:', error);
+                }
+            }, 3000);
+        }
+
+        // 显示成功结果
+        function showSuccess(videoUrl) {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('successContainer').style.display = 'block';
+            
+            document.getElementById('videoResultContainer').innerHTML = `
+                <video controls class="video-preview">
+                    <source src="${videoUrl}" type="video/mp4">
+                    您的浏览器不支持视频播放
+                </video>
+            `;
+            
+            document.getElementById('downloadVideoBtn').href = videoUrl;
+        }
+
+        // 显示错误
+        function showError(message) {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+            
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'block';
+            document.getElementById('error-text').textContent = '❌ ' + message;
+        }
+
+        // 重置到默认状态
+        function resetToDefault() {
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('successContainer').style.display = 'none';
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('defaultState').style.display = 'block';
+            
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+        }
+
+        // 继续生成
+        function generateAnother() {
+            resetToDefault();
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('taskType').value = 'i2v-first-frame';
+            document.getElementById('model').value = 'wanx2.1-i2v-turbo';
+            document.getElementById('prompt').value = '';
+            document.getElementById('imageUrl').value = '';
+            document.getElementById('endImageUrl').value = '';
+            document.getElementById('duration').value = '5';
+            document.getElementById('resolution').value = '720P';
+            document.getElementById('promptExtend').checked = true;
+            document.getElementById('seed').value = '';
+            
+            // 重置预览
+            previewImage('imageUrl', 'imagePreview');
+            previewImage('endImageUrl', 'endImagePreview');
+            
+            // 重置UI状态
+            onTaskTypeChange();
+            updatePromptCount();
+            resetToDefault();
+        }
+    </script>
+</body>
+</html> 

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📹 历史记录 - 阿里云百炼测试平台</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(20px);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .dropdown-item {
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .main-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+            background: white;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 12px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-danger {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #36d1dc 0%, #5b86e5 100%);
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-info:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(54, 209, 220, 0.4);
+            color: white;
+        }
+
+        .table-responsive {
+            border-radius: 15px;
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 自定义滚动条样式 */
+        .table-responsive::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, var(--primary-color), #40a9ff);
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #1890ff, #722ed1);
+        }
+
+        .table {
+            margin-bottom: 0;
+            min-width: 1600px; /* 增加最小宽度确保所有列都能显示 */
+            width: 100%;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border: none;
+            font-weight: 600;
+            color: #495057;
+            padding: 0.8rem;
+            white-space: nowrap; /* 防止列头换行 */
+            font-size: 0.9rem;
+        }
+
+        .table tbody td {
+            padding: 0.8rem;
+            vertical-align: middle;
+            border-color: rgba(0, 0, 0, 0.05);
+            white-space: nowrap; /* 防止内容换行 */
+            font-size: 0.9rem;
+        }
+
+        /* 设置各列的具体宽度 */
+        .table th:nth-child(1), .table td:nth-child(1) { width: 80px; min-width: 80px; }   /* ID列 */
+        .table th:nth-child(2), .table td:nth-child(2) { width: 140px; min-width: 140px; }  /* 任务类型列 */
+        .table th:nth-child(3), .table td:nth-child(3) { width: 180px; min-width: 180px; }  /* 模型列 */
+        .table th:nth-child(4), .table td:nth-child(4) { width: 280px; min-width: 280px; white-space: normal; }  /* 描述列 */
+        .table th:nth-child(5), .table td:nth-child(5) { width: 100px; min-width: 100px; }  /* 状态列 */
+        .table th:nth-child(6), .table td:nth-child(6) { width: 160px; min-width: 160px; }  /* 创建时间列 */
+        .table th:nth-child(7), .table td:nth-child(7) { width: 160px; min-width: 160px; }  /* 成功时间列 */
+        .table th:nth-child(8), .table td:nth-child(8) { width: 160px; min-width: 160px; }  /* 过期时间列 */
+        .table th:nth-child(9), .table td:nth-child(9) { width: 120px; min-width: 120px; }  /* 结果列 */
+        .table th:nth-child(10), .table td:nth-child(10) { width: 140px; min-width: 140px; } /* 操作列 */
+
+        /* 描述列允许换行显示 */
+        .table th:nth-child(4), .table td:nth-child(4) {
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 280px;
+        }
+
+        .table tbody tr:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .badge.bg-success {
+            background: var(--success-gradient) !important;
+        }
+
+        .badge.bg-warning {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%) !important;
+            color: #8b4513;
+        }
+
+        .badge.bg-danger {
+            background: var(--secondary-gradient) !important;
+        }
+
+        .badge.bg-secondary {
+            background: linear-gradient(135deg, #e2e2e2 0%, #c9c9c9 100%) !important;
+            color: #495057;
+        }
+
+        .pagination {
+            justify-content: center;
+        }
+
+        .page-link {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            color: #667eea;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .page-link:hover {
+            background: var(--primary-gradient);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .page-item.active .page-link {
+            background: var(--primary-gradient);
+            border-color: transparent;
+        }
+
+        .video-thumbnail {
+            width: 100px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .video-thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .time-info {
+            font-size: 0.85em;
+            color: #6c757d;
+        }
+
+        .expire-warning {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .expire-soon {
+            color: #fd7e14;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                margin-top: 1rem;
+                padding: 0 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-video me-2"></i>
+                🚀 阿里云百炼测试平台
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="videoDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-play-circle me-1"></i>
+                            🎬 视频生成
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/video-generation?type=i2v-first-frame">
+                                <i class="fas fa-image me-2"></i>🖼️ 基于首帧
+                            </a></li>
+                            <li><a class="dropdown-item" href="/video-generation?type=i2v-keyframes">
+                                <i class="fas fa-images me-2"></i>🎭 基于首尾帧
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/history">
+                            <i class="fas fa-history me-1"></i>
+                            📋 历史记录
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容 -->
+    <div class="container-fluid main-container" style="margin-top: 100px; padding: 0 20px;">
+        <!-- 筛选器 -->
+        <div class="filter-container">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-filter me-1"></i>
+                        🎯 任务类型
+                    </label>
+                    <select class="form-select" id="taskTypeFilter">
+                        <option value="">全部类型</option>
+                        <option value="i2v-first-frame">🖼️ 基于首帧</option>
+                        <option value="i2v-keyframes">🎭 基于首尾帧</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-info-circle me-1"></i>
+                        📊 状态
+                    </label>
+                    <select class="form-select" id="statusFilter">
+                        <option value="">全部状态</option>
+                        <option value="pending">⏳ 等待中</option>
+                        <option value="running">🔄 运行中</option>
+                        <option value="succeeded">✅ 成功</option>
+                        <option value="failed">❌ 失败</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-white">
+                        <i class="fas fa-list me-1"></i>
+                        📝 每页显示
+                    </label>
+                    <select class="form-select" id="pageSizeSelect">
+                        <option value="10">10条</option>
+                        <option value="20">20条</option>
+                        <option value="50">50条</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="loadHistory()">
+                        <i class="fas fa-search me-2"></i>
+                        🔍 筛选
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录卡片 -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        📋 历史记录
+                    </h3>
+                    <button class="btn btn-outline-light" onclick="loadHistory()">
+                        🔄 刷新
+                    </button>
+                </div>
+            </div>
+            
+            <div class="card-body p-0">
+                <div id="loadingSpinner" class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <div class="mt-2">🔄 加载历史记录中...</div>
+                </div>
+
+                <div id="historyContainer" style="display: none;">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>📝 ID</th>
+                                    <th>🎯 任务类型</th>
+                                    <th>🤖 模型</th>
+                                    <th>💭 描述</th>
+                                    <th>📊 状态</th>
+                                    <th>⏰ 创建时间</th>
+                                    <th>✨ 成功时间</th>
+                                    <th>⏳ 过期时间</th>
+                                    <th>🎬 结果</th>
+                                    <th>⚙️ 操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="emptyState" style="display: none;" class="text-center p-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">📭 暂无历史记录</h5>
+                    <p class="text-muted">开始创建您的第一个视频生成任务吧！ 🚀</p>
+                    <a href="/video-generation" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        ✨ 开始生成
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <nav id="paginationNav" class="mt-4" style="display: none;">
+            <ul class="pagination" id="pagination">
+            </ul>
+        </nav>
+    </div>
+
+    <!-- 视频预览模态框 -->
+    <div class="modal fade" id="videoModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">🎬 视频预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <video id="modalVideo" controls style="max-width: 100%; max-height: 400px;">
+                        您的浏览器不支持视频播放
+                    </video>
+                </div>
+                <div class="modal-footer">
+                    <a id="downloadVideoBtn" href="#" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-download me-2"></i>
+                        💾 下载视频
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadHistory();
+        });
+
+        // 加载历史记录
+        async function loadHistory(page = 1) {
+            currentPage = page;
+            const taskType = document.getElementById('taskTypeFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            const pageSize = document.getElementById('pageSizeSelect').value;
+
+            showLoading();
+
+            try {
+                let url = `/api/video/history?page=${page}&page_size=${pageSize}`;
+                if (taskType) url += `&task_type=${taskType}`;
+                if (status) url += `&status=${status}`;
+
+                const response = await fetch(url);
+                const result = await response.json();
+
+                if (response.ok) {
+                    displayHistory(result.data);
+                    updatePagination(result.pagination);
+                } else {
+                    showError('加载历史记录失败: ' + result.error);
+                }
+            } catch (error) {
+                showError('网络错误: ' + error.message);
+            }
+        }
+
+        // 显示加载状态
+        function showLoading() {
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('historyContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        // 显示历史记录
+        function displayHistory(data) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+
+            if (!data || data.length === 0) {
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('historyContainer').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('historyContainer').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = data.map(item => `
+                <tr>
+                    <td><strong>#${item.id}</strong></td>
+                    <td>
+                        <span class="badge bg-info">
+                            ${item.task_type === 'i2v-first-frame' ? '🖼️ 基于首帧' : '🎭 基于首尾帧'}
+                        </span>
+                    </td>
+                    <td><code>${item.model}</code></td>
+                    <td>
+                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
+                             title="${item.prompt}">
+                            ${item.prompt}
+                        </div>
+                    </td>
+                    <td>${getStatusBadge(item.status)}</td>
+                    <td>
+                        <small>${formatDate(item.created_at)}</small>
+                    </td>
+                    <td>
+                        <div class="time-info">
+                            ${item.success_time ? formatDate(item.success_time) : '-'}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="time-info">
+                            ${getExpireInfo(item.expire_time, item.status)}
+                        </div>
+                    </td>
+                    <td>
+                        ${item.video_url ? `
+                            <video class="video-thumbnail" onclick="showVideoModal('${item.video_url}')" 
+                                   style="cursor: pointer;">
+                                <source src="${item.video_url}" type="video/mp4">
+                            </video>
+                        ` : '-'}
+                    </td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-info btn-sm" onclick="viewTaskDetail(${item.id})" 
+                                    title="查看详情">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteTask(${item.id})" 
+                                    title="删除任务">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // 获取状态徽章
+        function getStatusBadge(status) {
+            const badges = {
+                'pending': '<span class="badge bg-secondary">⏳ 等待中</span>',
+                'running': '<span class="badge bg-warning">🔄 运行中</span>',
+                'succeeded': '<span class="badge bg-success">✅ 成功</span>',
+                'failed': '<span class="badge bg-danger">❌ 失败</span>'
+            };
+            return badges[status] || '<span class="badge bg-secondary">❓ 未知</span>';
+        }
+
+        // 获取过期信息
+        function getExpireInfo(expireTime, status) {
+            if (!expireTime || status !== 'succeeded') {
+                return '-';
+            }
+            
+            const now = new Date();
+            const expire = new Date(expireTime);
+            const diffHours = (expire - now) / (1000 * 60 * 60);
+            
+            if (diffHours <= 0) {
+                return '<span class="expire-warning">⚠️ 已过期</span>';
+            } else if (diffHours <= 6) {
+                return `<span class="expire-soon">⏰ ${Math.ceil(diffHours)}小时后过期</span>`;
+            } else {
+                return formatDate(expireTime);
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('zh-CN');
+        }
+
+        // 查看任务详情
+        function viewTaskDetail(taskId) {
+            window.open(`/task-detail/${taskId}`, '_blank');
+        }
+
+        // 更新分页
+        function updatePagination(pagination) {
+            totalPages = pagination.total_page;
+            const paginationNav = document.getElementById('paginationNav');
+            const paginationUl = document.getElementById('pagination');
+
+            if (totalPages <= 1) {
+                paginationNav.style.display = 'none';
+                return;
+            }
+
+            paginationNav.style.display = 'block';
+            
+            let paginationHTML = '';
+            
+            // 上一页
+            if (currentPage > 1) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadHistory(${currentPage - 1})">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            // 页码
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="loadHistory(${i})">${i}</a>
+                    </li>
+                `;
+            }
+
+            // 下一页
+            if (currentPage < totalPages) {
+                paginationHTML += `
+                    <li class="page-item">
+                        <a class="page-link" href="#" onclick="loadHistory(${currentPage + 1})">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            paginationUl.innerHTML = paginationHTML;
+        }
+
+        // 显示视频模态框
+        function showVideoModal(videoUrl) {
+            const modal = new bootstrap.Modal(document.getElementById('videoModal'));
+            const video = document.getElementById('modalVideo');
+            const downloadBtn = document.getElementById('downloadVideoBtn');
+            
+            video.src = videoUrl;
+            downloadBtn.href = videoUrl;
+            modal.show();
+        }
+
+        // 删除任务
+        async function deleteTask(taskId) {
+            if (!confirm('🗑️ 确定要删除这个任务吗？此操作无法撤销。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/video/${taskId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('✅ 任务删除成功');
+                    loadHistory(currentPage);
+                } else {
+                    alert('❌ 删除失败: ' + result.error);
+                }
+            } catch (error) {
+                alert('❌ 网络错误: ' + error.message);
+            }
+        }
+
+        // 显示错误
+        function showError(message) {
+            document.getElementById('loadingSpinner').style.display = 'none';
+            document.getElementById('historyContainer').style.display = 'none';
+            document.getElementById('emptyState').innerHTML = `
+                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                <h5 class="text-danger">❌ 加载失败</h5>
+                <p class="text-muted">${message}</p>
+                <button class="btn btn-primary" onclick="loadHistory()">
+                    <i class="fas fa-refresh me-2"></i>
+                    🔄 重试
+                </button>
+            `;
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // 筛选器变化时自动加载
+        document.getElementById('taskTypeFilter').addEventListener('change', () => loadHistory(1));
+        document.getElementById('statusFilter').addEventListener('change', () => loadHistory(1));
+        document.getElementById('pageSizeSelect').addEventListener('change', () => loadHistory(1));
+    </script>
+</body>
+</html> 
