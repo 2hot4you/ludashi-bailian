@@ -211,6 +211,9 @@
                             <li><a class="dropdown-item" href="/video-generation?type=i2v-keyframes">
                                 <i class="fas fa-images me-2"></i>🎭 基于首尾帧
                             </a></li>
+                            <li><a class="dropdown-item" href="/video-generation?type=t2v">
+                                <i class="fas fa-text-width me-2"></i>✍️ 文生视频
+                            </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -348,7 +351,7 @@
             </div>
 
             <!-- 输入图片 -->
-            <div class="card mb-4">
+            <div class="card mb-4" id="inputImageCard">
                 <div class="card-header">
                     <h3 class="mb-0">
                         <i class="fas fa-image me-2"></i>
@@ -483,17 +486,32 @@
                 document.getElementById('errorMessage').value = data.error;
             }
 
-            // 首帧图片
-            if (data.image_url) {
-                document.getElementById('firstImageContainer').innerHTML = 
-                    `<img src="${data.image_url}" class="image-preview" alt="首帧图片">`;
-            }
+            // 处理图片显示区域
+            const inputImageCard = document.getElementById('inputImageCard');
+            
+            // 如果是文生视频任务或者没有任何图片URL，隐藏整个图片卡片
+            if (data.task_type === 't2v' || (!data.image_url && !data.end_image_url)) {
+                inputImageCard.style.display = 'none';
+            } else {
+                inputImageCard.style.display = 'block';
+                
+                // 首帧图片
+                if (data.image_url) {
+                    document.getElementById('firstImageContainer').innerHTML = 
+                        `<img src="${data.image_url}" class="image-preview" alt="首帧图片">`;
+                } else {
+                    document.getElementById('firstImageContainer').innerHTML = 
+                        `<p class="text-muted">暂无图片</p>`;
+                }
 
-            // 尾帧图片
-            if (data.end_image_url) {
-                document.getElementById('endImageSection').style.display = 'block';
-                document.getElementById('endImageContainer').innerHTML = 
-                    `<img src="${data.end_image_url}" class="image-preview" alt="尾帧图片">`;
+                // 尾帧图片
+                if (data.end_image_url) {
+                    document.getElementById('endImageSection').style.display = 'block';
+                    document.getElementById('endImageContainer').innerHTML = 
+                        `<img src="${data.end_image_url}" class="image-preview" alt="尾帧图片">`;
+                } else {
+                    document.getElementById('endImageSection').style.display = 'none';
+                }
             }
 
             // 生成结果
@@ -511,12 +529,12 @@
 
         // 获取任务类型文本
         function getTaskTypeText(taskType) {
-            if (taskType === 'i2v-first-frame') {
-                return '<span class="badge bg-info">🖼️ 基于首帧</span>';
-            } else if (taskType === 'i2v-keyframes') {
-                return '<span class="badge bg-primary">🎭 基于首尾帧</span>';
-            }
-            return taskType;
+            const typeTexts = {
+                'i2v-first-frame': '<span class="badge bg-info">🖼️ 基于首帧</span>',
+                'i2v-keyframes': '<span class="badge bg-primary">🎭 基于首尾帧</span>',
+                't2v': '<span class="badge bg-success">✍️ 文生视频</span>'
+            };
+            return typeTexts[taskType] || '<span class="badge bg-secondary">❓ ' + taskType + '</span>';
         }
 
         // 获取状态徽章

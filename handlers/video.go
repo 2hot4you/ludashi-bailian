@@ -41,13 +41,24 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 	}
 
 	// 验证任务类型
-	if req.TaskType != "i2v-first-frame" && req.TaskType != "i2v-keyframes" {
+	if req.TaskType != "i2v-first-frame" && req.TaskType != "i2v-keyframes" && req.TaskType != "t2v" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "不支持的任务类型"})
 		return
 	}
 
 	// 验证模型
-	if req.Model != "wanx2.1-i2v-turbo" && req.Model != "wanx2.1-i2v-plus" {
+	validModels := []string{
+		"wanx2.1-i2v-turbo", "wanx2.1-i2v-plus",
+		"wanx2.1-t2v-turbo", "wanx2.1-t2v-plus",
+	}
+	isValidModel := false
+	for _, model := range validModels {
+		if req.Model == model {
+			isValidModel = true
+			break
+		}
+	}
+	if !isValidModel {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "不支持的模型"})
 		return
 	}
@@ -58,30 +69,60 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 		return
 	}
 
-	// 验证模型与任务类型的匹配
-	if req.TaskType == "i2v-keyframes" && req.Model != "wanx2.1-i2v-plus" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "首尾帧任务只支持wanx2.1-i2v-plus模型"})
-		return
+	// 验证任务类型与模型的匹配
+	switch req.TaskType {
+	case "i2v-first-frame", "i2v-keyframes":
+		if req.Model != "wanx2.1-i2v-turbo" && req.Model != "wanx2.1-i2v-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "图生视频任务只支持wanx2.1-i2v-turbo和wanx2.1-i2v-plus模型"})
+			return
+		}
+		// 检查是否提供了图片URL
+		if req.ImageURL == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "图生视频任务需要提供图片"})
+			return
+		}
+	case "t2v":
+		if req.Model != "wanx2.1-t2v-turbo" && req.Model != "wanx2.1-t2v-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "文生视频任务只支持wanx2.1-t2v-turbo和wanx2.1-t2v-plus模型"})
+			return
+		}
+	}
+
+	// 验证首尾帧任务的特殊要求
+	if req.TaskType == "i2v-keyframes" {
+		if req.Model != "wanx2.1-i2v-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "首尾帧任务只支持wanx2.1-i2v-plus模型"})
+			return
+		}
+		if req.EndImageURL == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "首尾帧任务需要提供结束帧图片"})
+			return
+		}
 	}
 
 	// 验证分辨率
-	if req.Model == "wanx2.1-i2v-turbo" && req.Resolution != "480P" && req.Resolution != "720P" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-turbo模型只支持480P和720P分辨率"})
-		return
+	if req.Model == "wanx2.1-i2v-turbo" || req.Model == "wanx2.1-t2v-turbo" {
+		if req.Resolution != "480P" && req.Resolution != "720P" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "turbo模型只支持480P和720P分辨率"})
+			return
+		}
 	}
-	if req.Model == "wanx2.1-i2v-plus" && req.Resolution != "720P" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-plus模型只支持720P分辨率"})
-		return
+	if req.Model == "wanx2.1-i2v-plus" {
+		if req.Resolution != "720P" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-plus模型只支持720P分辨率"})
+			return
+		}
+	}
+	if req.Model == "wanx2.1-t2v-plus" {
+		if req.Resolution != "720P" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-t2v-plus模型只支持720P分辨率"})
+			return
+		}
 	}
 
-	// 验证时长
-	if req.Model == "wanx2.1-i2v-turbo" && (req.Duration < 3 || req.Duration > 5) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-turbo模型支持3-5秒时长"})
-		return
-	}
-	if req.Model == "wanx2.1-i2v-plus" && req.Duration != 5 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-plus模型只支持5秒时长"})
-		return
+	// 验证时长 - 固定为5秒
+	if req.Duration != 5 {
+		req.Duration = 5 // 强制设置为5秒
 	}
 
 	// 验证种子范围
@@ -90,10 +131,15 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 		return
 	}
 
-	// 如果是首尾帧任务，检查是否提供了结束帧
-	if req.TaskType == "i2v-keyframes" && req.EndImageURL == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "首尾帧任务需要提供结束帧图片"})
-		return
+	// 处理分辨率大小设置
+	if req.Size == "" && req.Resolution != "" {
+		// 根据分辨率档位设置默认尺寸
+		switch req.Resolution {
+		case "480P":
+			req.Size = "832*480" // 默认16:9
+		case "720P":
+			req.Size = "1280*720" // 默认16:9
+		}
 	}
 
 	// 创建数据库记录
@@ -106,6 +152,7 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 		Status:       "pending",
 		Duration:     req.Duration,
 		Resolution:   req.Resolution,
+		Size:         req.Size,
 		Seed:         req.Seed,
 		PromptExtend: req.PromptExtend,
 	}

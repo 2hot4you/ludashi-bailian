@@ -51,18 +51,37 @@ func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoGeneration
 	taskReq := models.DashScopeTaskRequest{
 		Model: req.Model, // 使用用户选择的模型
 		Input: models.DashScopeTaskInput{
-			Prompt:   prompt,
-			ImageURL: req.ImageURL,
+			Prompt: prompt,
 		},
 		Parameters: models.DashScopeTaskParameters{
-			Resolution: req.Resolution,
-			Duration:   req.Duration,
+			Duration: req.Duration,
 		},
 	}
 
-	// 如果是首尾帧任务，添加结束帧
-	if req.TaskType == "i2v-keyframes" && req.EndImageURL != "" {
-		taskReq.Input.EndImageURL = req.EndImageURL
+	// 根据任务类型设置不同的输入参数
+	switch req.TaskType {
+	case "i2v-first-frame":
+		taskReq.Input.ImageURL = req.ImageURL
+	case "i2v-keyframes":
+		taskReq.Input.ImageURL = req.ImageURL
+		if req.EndImageURL != "" {
+			taskReq.Input.EndImageURL = req.EndImageURL
+		}
+	case "t2v":
+		// 文生视频不需要图片输入
+	}
+
+	// 设置分辨率参数
+	if req.Size != "" {
+		taskReq.Parameters.Size = req.Size
+	} else if req.Resolution != "" {
+		// 如果没有指定具体尺寸，根据分辨率档位设置默认值
+		switch req.Resolution {
+		case "480P":
+			taskReq.Parameters.Size = "832*480" // 默认16:9
+		case "720P":
+			taskReq.Parameters.Size = "1280*720" // 默认16:9
+		}
 	}
 
 	// 添加高级参数

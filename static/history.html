@@ -160,6 +160,7 @@
             margin-bottom: 0;
             min-width: 1600px; /* 增加最小宽度确保所有列都能显示 */
             width: 100%;
+            table-layout: fixed !important; /* 固定表格布局 */
         }
 
         .table thead th {
@@ -170,14 +171,21 @@
             padding: 0.8rem;
             white-space: nowrap; /* 防止列头换行 */
             font-size: 0.9rem;
+            height: 40px; /* 表头行高也设置为80px */
         }
 
         .table tbody td {
-            padding: 0.8rem;
-            vertical-align: middle;
+            padding: 0.5rem !important; /* 减少内边距 */
+            vertical-align: middle !important;
             border-color: rgba(0, 0, 0, 0.05);
             white-space: nowrap; /* 防止内容换行 */
             font-size: 0.9rem;
+            height: 80px !important; /* 强制固定行高 */
+            max-height: 80px !important;
+            min-height: 80px !important;
+            overflow: hidden; /* 防止内容溢出 */
+            line-height: 1.2 !important; /* 控制行高 */
+            box-sizing: border-box !important; /* 包含padding在高度内 */
         }
 
         /* 设置各列的具体宽度 */
@@ -192,11 +200,22 @@
         .table th:nth-child(9), .table td:nth-child(9) { width: 120px; min-width: 120px; }  /* 结果列 */
         .table th:nth-child(10), .table td:nth-child(10) { width: 140px; min-width: 140px; } /* 操作列 */
 
-        /* 描述列允许换行显示 */
+        /* 描述列允许换行显示但限制高度 */
         .table th:nth-child(4), .table td:nth-child(4) {
             white-space: normal;
             word-wrap: break-word;
             max-width: 280px;
+            height: 80px !important; /* 强制高度 */
+            max-height: 80px !important;
+            overflow: hidden; /* 隐藏溢出内容 */
+            text-overflow: ellipsis; /* 显示省略号 */
+        }
+
+        .table tbody tr {
+            height: 80px !important; /* 强制每行高度为80px */
+            max-height: 80px !important;
+            min-height: 80px !important;
+            line-height: 1 !important; /* 重置行高 */
         }
 
         .table tbody tr:hover {
@@ -207,6 +226,10 @@
             padding: 0.5rem 1rem;
             border-radius: 20px;
             font-weight: 500;
+            display: inline-block;
+            max-height: 32px; /* 限制徽章高度 */
+            line-height: 1.2; /* 控制行高 */
+            vertical-align: middle;
         }
 
         .badge.bg-success {
@@ -252,17 +275,94 @@
         }
 
         .video-thumbnail {
-            width: 100px;
-            height: 60px;
+            width: 80px;
+            height: 45px;
             object-fit: cover;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: block;
+            margin: 0 auto; /* 居中显示 */
         }
 
         .video-thumbnail:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 结果列的样式 */
+        .result-cell {
+            text-align: center;
+            vertical-align: middle !important;
+        }
+
+        .result-cell .no-result {
+            color: #6c757d;
+            font-size: 1.2em;
+            line-height: 80px; /* 与行高一致 */
+        }
+
+        /* 操作列的样式 */
+        .action-cell {
+            text-align: center;
+            vertical-align: middle !important;
+        }
+
+        .action-cell .btn-group {
+            display: inline-flex;
+            align-items: center;
+            max-height: 40px; /* 限制按钮组高度 */
+        }
+
+        .btn-sm {
+            max-height: 32px !important;
+            line-height: 1.2 !important;
+        }
+
+        /* 强制所有表格元素的高度控制 */
+        .table tbody tr td,
+        .table tbody tr td *,
+        .table tbody tr td .badge,
+        .table tbody tr td .btn,
+        .table tbody tr td .btn-group,
+        .table tbody tr td video,
+        .table tbody tr td div {
+            max-height: 80px !important;
+            line-height: 1.2 !important;
+        }
+
+        /* 特别强制视频缩略图不超过行高 */
+        .video-thumbnail {
+            max-height: 50px !important;
+            height: 50px !important;
+        }
+
+        /* 最强制的高度控制 - 覆盖所有可能的样式 */
+        #historyTableBody tr {
+            height: 80px !important;
+            max-height: 80px !important;
+            min-height: 80px !important;
+        }
+
+        #historyTableBody tr td {
+            height: 80px !important;
+            max-height: 80px !important;
+            min-height: 80px !important;
+        }
+
+        /* 状态列和时间信息列的样式 */
+        .status-cell, .time-cell {
+            text-align: center;
+            vertical-align: middle !important;
+        }
+
+        .time-info {
+            font-size: 0.85em;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
         }
 
         .filter-container {
@@ -356,6 +456,7 @@
                         <option value="">全部类型</option>
                         <option value="i2v-first-frame">🖼️ 基于首帧</option>
                         <option value="i2v-keyframes">🎭 基于首尾帧</option>
+                        <option value="t2v">✍️ 文生视频</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -543,39 +644,38 @@
                     <td><strong>#${item.id}</strong></td>
                     <td>
                         <span class="badge bg-info">
-                            ${item.task_type === 'i2v-first-frame' ? '🖼️ 基于首帧' : '🎭 基于首尾帧'}
+                            ${getTaskTypeText(item.task_type)}
                         </span>
                     </td>
                     <td><code>${item.model}</code></td>
-                    <td>
-                        <div style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" 
-                             title="${item.prompt}">
+                    <td style="height: 80px !important; max-height: 80px !important; overflow: hidden;" title="${item.prompt}">
+                        <div style="max-width: 280px; height: 100%; overflow: hidden; display: flex; align-items: center;">
                             ${item.prompt}
                         </div>
                     </td>
-                    <td>${getStatusBadge(item.status)}</td>
-                    <td>
+                    <td class="status-cell">${getStatusBadge(item.status)}</td>
+                    <td class="time-cell">
                         <small>${formatDate(item.created_at)}</small>
                     </td>
-                    <td>
+                    <td class="time-cell">
                         <div class="time-info">
                             ${item.success_time ? formatDate(item.success_time) : '-'}
                         </div>
                     </td>
-                    <td>
+                    <td class="time-cell">
                         <div class="time-info">
                             ${getExpireInfo(item.expire_time, item.status)}
                         </div>
                     </td>
-                    <td>
+                    <td class="result-cell">
                         ${item.video_url ? `
                             <video class="video-thumbnail" onclick="showVideoModal('${item.video_url}')" 
                                    style="cursor: pointer;">
                                 <source src="${item.video_url}" type="video/mp4">
                             </video>
-                        ` : '-'}
+                        ` : '<div class="no-result">-</div>'}
                     </td>
-                    <td>
+                    <td class="action-cell">
                         <div class="btn-group" role="group">
                             <button class="btn btn-info btn-sm" onclick="viewTaskDetail(${item.id})" 
                                     title="查看详情">
@@ -589,6 +689,16 @@
                     </td>
                 </tr>
             `).join('');
+        }
+
+        // 获取任务类型文本
+        function getTaskTypeText(taskType) {
+            const typeTexts = {
+                'i2v-first-frame': '🖼️ 基于首帧',
+                'i2v-keyframes': '🎭 基于首尾帧',
+                't2v': '✍️ 文生视频'
+            };
+            return typeTexts[taskType] || '❓ 未知类型';
         }
 
         // 获取状态徽章

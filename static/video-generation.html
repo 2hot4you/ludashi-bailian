@@ -269,6 +269,9 @@
                             <li><a class="dropdown-item" href="#" onclick="switchTaskType('i2v-keyframes')">
                                 <i class="fas fa-images me-2"></i>🎭 基于首尾帧
                             </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchTaskType('t2v')">
+                                <i class="fas fa-text-width me-2"></i>✍️ 文生视频
+                            </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -309,6 +312,7 @@
                                 <select class="form-select" id="taskType" onchange="onTaskTypeChange()">
                                     <option value="i2v-first-frame">🖼️ 基于首帧生成</option>
                                     <option value="i2v-keyframes">🎭 基于首尾帧生成</option>
+                                    <option value="t2v">✍️ 文生视频</option>
                                 </select>
                             </div>
                         </div>
@@ -346,7 +350,7 @@
                                 💭 文本描述 * <small class="text-muted">(最多800字符)</small>
                             </label>
                             <textarea class="form-control" id="prompt" rows="4" maxlength="800"
-                                placeholder="请详细描述您希望生成的视频内容，包括动作、场景、风格等... 🎨&#10;例如：一只可爱的小猫在花园里追蝴蝶，阳光明媚，画面温馨 🐱🦋"></textarea>
+                                placeholder="请详细描述您希望生成的视频内容，包括动作、场景、风格等... 🎨&#10;例如：一只可爱的小猫在花园里追蝴蝶，阳光明媚，画面温馨 🐱🦋&#10;文生视频示例：大海上的夕阳，浪花拍打着礁石，海鸥在空中飞翔 🌅🌊"></textarea>
                             <div class="form-text">
                                 <span id="prompt-count">0</span>/800 字符 📝
                                 支持中英文，每个汉字/字母占一个字符，超过部分会自动截断。
@@ -621,17 +625,54 @@
             const taskType = document.getElementById('taskType').value;
             const endImageContainer = document.getElementById('endImageContainer');
             const endImagePreview = document.getElementById('endImagePreview');
+            const imageUrlContainer = document.getElementById('imageUrl').parentElement;
+            const imagePreviewCard = document.getElementById('imagePreview').closest('.card'); // 图片预览卡片
             const pageTitle = document.getElementById('page-title');
+            const modelSelect = document.getElementById('model');
             
-            if (taskType === 'i2v-keyframes') {
+            if (taskType === 't2v') {
+                // 文生视频模式
+                endImageContainer.style.display = 'none';
+                endImagePreview.style.display = 'none';
+                imageUrlContainer.style.display = 'none'; // 隐藏图片输入
+                if (imagePreviewCard) {
+                    imagePreviewCard.style.display = 'none'; // 隐藏整个图片预览卡片
+                }
+                pageTitle.textContent = '✍️ 通义万相 - 文生视频';
+                
+                // 文生视频支持两种模型
+                modelSelect.innerHTML = `
+                    <option value="wanx2.1-t2v-turbo">⚡ wanx2.1-t2v-turbo (快速生成)</option>
+                    <option value="wanx2.1-t2v-plus">✨ wanx2.1-t2v-plus (高质量生成)</option>
+                `;
+            } else if (taskType === 'i2v-keyframes') {
                 endImageContainer.style.display = 'block';
                 endImagePreview.style.display = 'block';
+                imageUrlContainer.style.display = 'block';
+                if (imagePreviewCard) {
+                    imagePreviewCard.style.display = 'block'; // 显示图片预览卡片
+                }
                 pageTitle.textContent = '🎭 通义万相 - 首尾帧视频生成';
-                document.getElementById('model').value = 'wanx2.1-i2v-plus';
+                
+                // 首尾帧只支持plus模型
+                modelSelect.innerHTML = `
+                    <option value="wanx2.1-i2v-plus">✨ wanx2.1-i2v-plus (高质量模式)</option>
+                `;
+                modelSelect.value = 'wanx2.1-i2v-plus';
             } else {
                 endImageContainer.style.display = 'none';
                 endImagePreview.style.display = 'none';
+                imageUrlContainer.style.display = 'block';
+                if (imagePreviewCard) {
+                    imagePreviewCard.style.display = 'block'; // 显示图片预览卡片
+                }
                 pageTitle.textContent = '🎨 通义万相 - 图生视频';
+                
+                // 基于首帧支持两种模型
+                modelSelect.innerHTML = `
+                    <option value="wanx2.1-i2v-turbo">⚡ wanx2.1-i2v-turbo (快速模式)</option>
+                    <option value="wanx2.1-i2v-plus">✨ wanx2.1-i2v-plus (高质量模式)</option>
+                `;
             }
             
             onModelChange();
@@ -650,7 +691,7 @@
                     <strong>⚡ wanx2.1-i2v-turbo:</strong> 
                     基于首帧图片生成视频，处理速度快，适合快速预览和测试。
                     <div class="mt-2">
-                        <span class="feature-badge">🚀 3-5秒时长</span>
+                        <span class="feature-badge">🚀 5秒时长</span>
                         <span class="feature-badge">📺 480P/720P</span>
                         <span class="feature-badge">⚡ 快速生成</span>
                     </div>
@@ -658,23 +699,14 @@
                 
                 // 更新时长选项
                 durationSelect.innerHTML = `
-                    <option value="3">3秒</option>
-                    <option value="4">4秒</option>
                     <option value="5" selected>5秒</option>
                 `;
                 
                 // 更新分辨率选项
                 resolutionSelect.innerHTML = `
-                    <option value="480P">480P (640×480)</option>
+                    <option value="480P">480P (832×480)</option>
                     <option value="720P" selected>720P (1280×720)</option>
                 `;
-                
-                // 首尾帧任务强制使用plus模型
-                if (taskType === 'i2v-keyframes') {
-                    document.getElementById('model').value = 'wanx2.1-i2v-plus';
-                    onModelChange();
-                    return;
-                }
                 
             } else if (model === 'wanx2.1-i2v-plus') {
                 description.innerHTML = `
@@ -684,6 +716,51 @@
                         <span class="feature-badge">🎭 支持首尾帧</span>
                         <span class="feature-badge">📺 720P高清</span>
                         <span class="feature-badge">✨ 高质量</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 更新分辨率选项
+                resolutionSelect.innerHTML = `
+                    <option value="720P" selected>720P (1280×720)</option>
+                `;
+                
+            } else if (model === 'wanx2.1-t2v-turbo') {
+                description.innerHTML = `
+                    <strong>⚡ wanx2.1-t2v-turbo:</strong> 
+                    纯文本生成视频，生成速度更快，表现均衡，适合快速创意实现。
+                    <div class="mt-2">
+                        <span class="feature-badge">🚀 5秒时长</span>
+                        <span class="feature-badge">📺 480P/720P</span>
+                        <span class="feature-badge">⚡ 快速生成</span>
+                        <span class="feature-badge">✍️ 文本创作</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 更新分辨率选项
+                resolutionSelect.innerHTML = `
+                    <option value="480P">480P (832×480)</option>
+                    <option value="720P" selected>720P (1280×720)</option>
+                `;
+                
+            } else if (model === 'wanx2.1-t2v-plus') {
+                description.innerHTML = `
+                    <strong>✨ wanx2.1-t2v-plus:</strong> 
+                    高质量文生视频，生成细节更丰富，画面更具质感，适合专业创作。
+                    <div class="mt-2">
+                        <span class="feature-badge">🚀 5秒时长</span>
+                        <span class="feature-badge">📺 720P高清</span>
+                        <span class="feature-badge">✨ 高质量</span>
+                        <span class="feature-badge">✍️ 文本创作</span>
                     </div>
                 `;
                 
@@ -783,14 +860,20 @@
                 return;
             }
             
-            if (!imageUrl) {
-                alert('❌ 请输入首帧图片URL');
-                return;
-            }
-            
-            if (taskType === 'i2v-keyframes' && !endImageUrl) {
-                alert('❌ 基于首尾帧模式需要提供结束帧图片URL');
-                return;
+            // 根据任务类型验证不同的必填字段
+            if (taskType === 't2v') {
+                // 文生视频不需要图片
+            } else {
+                // 图生视频需要图片
+                if (!imageUrl) {
+                    alert('❌ 请输入首帧图片URL');
+                    return;
+                }
+                
+                if (taskType === 'i2v-keyframes' && !endImageUrl) {
+                    alert('❌ 基于首尾帧模式需要提供结束帧图片URL');
+                    return;
+                }
             }
             
             // 构建请求数据
@@ -798,14 +881,19 @@
                 task_type: taskType,
                 model: document.getElementById('model').value,
                 prompt: prompt,
-                image_url: imageUrl,
                 duration: parseInt(document.getElementById('duration').value),
                 resolution: document.getElementById('resolution').value,
                 prompt_extend: document.getElementById('promptExtend').checked
             };
             
-            if (taskType === 'i2v-keyframes') {
-                requestData.end_image_url = endImageUrl;
+            // 根据任务类型添加相应的图片字段
+            if (taskType === 't2v') {
+                // 文生视频不需要图片字段
+            } else {
+                requestData.image_url = imageUrl;
+                if (taskType === 'i2v-keyframes') {
+                    requestData.end_image_url = endImageUrl;
+                }
             }
             
             const seedValue = document.getElementById('seed').value.trim();
