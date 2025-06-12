@@ -265,8 +265,8 @@ Warning: DASHSCOPE_API_KEY environment variable is not set
 
 **LUDASHI & IXIAOZU**
 
-- 📧 Email: your-email@example.com
-- 🐙 GitHub: [@your-username](https://github.com/your-username)
+- 📧 Email: xibin@xistack.com
+- 🐙 GitHub: [@2hot4you](https://github.com/2hot4you)
 
 ## 🙏 致谢
 
