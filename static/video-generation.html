@@ -272,6 +272,13 @@
                             <li><a class="dropdown-item" href="#" onclick="switchTaskType('t2v')">
                                 <i class="fas fa-text-width me-2"></i>✍️ 文生视频
                             </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchTaskType('image_reference')">
+                                <i class="fas fa-images me-2"></i>🎬 通用视频编辑 - 多图参考生成
+                            </a></li>
+                            <li><a class="dropdown-item" href="#" onclick="switchTaskType('video_repainting')">
+                                <i class="fas fa-paint-brush me-2"></i>🎬 通用视频编辑 - 视频重绘
+                            </a></li>
                         </ul>
                     </li>
                 </ul>
@@ -313,6 +320,8 @@
                                     <option value="i2v-first-frame">🖼️ 基于首帧生成</option>
                                     <option value="i2v-keyframes">🎭 基于首尾帧生成</option>
                                     <option value="t2v">✍️ 文生视频</option>
+                                    <option value="image_reference">🎬 通用视频编辑 - 多图参考生成</option>
+                                    <option value="video_repainting">🎬 通用视频编辑 - 视频重绘</option>
                                 </select>
                             </div>
                         </div>
@@ -379,6 +388,135 @@
                             <div class="form-text">🎭 基于首尾帧模式需要提供结束帧图片</div>
                         </div>
 
+                        <!-- 多图参考生成 - 参考图片URLs（条件显示） -->
+                        <div class="mb-4" id="refImagesContainer" style="display: none;">
+                            <label class="form-label">
+                                <i class="fas fa-images me-1"></i>
+                                🖼️ 参考图片URLs * <small class="text-muted">(1-3张)</small>
+                            </label>
+                            <div id="refImagesList">
+                                <div class="ref-image-item mb-3">
+                                    <div class="row align-items-top">
+                                        <div class="col-8">
+                                            <input type="url" class="form-control ref-image-url" 
+                                                placeholder="https://example.com/ref-image-1.jpg" 
+                                                onchange="previewRefImage(this, 0)">
+                                            <div class="form-text">📎 参考图片1（建议每张图像中仅包含一个主体，背景建议为纯色）</div>
+                                        </div>
+                                        <div class="col-2">
+                                            <label class="form-label form-label-sm mb-1">类型</label>
+                                            <select class="form-select form-select-sm obj-or-bg-select">
+                                                <option value="obj">主体</option>
+                                                <option value="bg">背景</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-2">
+                                            <label class="form-label form-label-sm mb-1" style="visibility: hidden;">操作</label>
+                                            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeRefImage(0)" style="display: none;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="addRefImageBtn" onclick="addRefImage()">
+                                <i class="fas fa-plus me-1"></i> 添加参考图片
+                            </button>
+                            <div class="form-text mt-2">
+                                <strong>图像限制:</strong><br>
+                                • 格式: JPG、JPEG、PNG、BMP、TIFF、WEBP<br>
+                                • 分辨率: 宽度和高度范围[360, 2000]像素<br>
+                                • 大小: 不超过10MB<br>
+                                • URL地址中不能包含中文字符
+                            </div>
+                        </div>
+
+                        <!-- 视频重绘参数（条件显示） -->
+                        <div id="videoUrlContainer" style="display: none;">
+                            <!-- 输入视频URL -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-video me-1"></i>
+                                    🎬 输入视频URL <span class="text-danger">*</span>
+                                </label>
+                                <input type="url" class="form-control" id="videoUrl" 
+                                    placeholder="https://example.com/video.mp4" onchange="previewVideo()" required>
+                                <div class="form-text">
+                                    <strong>视频限制:</strong><br>
+                                    • 格式: MP4<br>
+                                    • 帧率: 大于等于16fps<br>
+                                    • 大小: 不超过50MB<br>
+                                    • 长度: 不超过5秒，否则取视频的前5秒<br>
+                                    • URL地址中不能包含中文字符<br>
+                                    <strong>分辨率说明:</strong> 若输入视频分辨率不超过720P则保留原始分辨率；若超过720P则按比例缩小至720P以下
+                                </div>
+                            </div>
+
+                            <!-- 控制条件 -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-sliders-h me-1"></i>
+                                    🎯 特征提取方式 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="controlCondition" required>
+                                    <option value="posebodyface">👤 脸部表情+肢体动作 (posebodyface)</option>
+                                    <option value="posebody">🦴 肢体动作 (posebody)</option>
+                                    <option value="depth">📐 构图和运动轮廓 (depth)</option>
+                                    <option value="scribble">✏️ 线稿结构 (scribble)</option>
+                                </select>
+                                <div class="form-text">
+                                    🎯 选择视频特征提取方式：<br>
+                                    • <strong>脸部表情+肢体动作</strong>：适用于主体脸部在画面中占比较大、特征清晰可见的场景<br>
+                                    • <strong>肢体动作</strong>：适用于主体脸部在画面中占比较小的场景<br>
+                                    • <strong>构图和运动轮廓</strong>：提取整体构图和运动<br>
+                                    • <strong>线稿结构</strong>：提取线稿结构
+                                </div>
+                            </div>
+                            
+                            <!-- 控制强度 -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-adjust me-1"></i>
+                                    ⚖️ 控制强度
+                                </label>
+                                <div class="row align-items-center">
+                                    <div class="col-8">
+                                        <input type="range" class="form-range" id="strength" 
+                                               min="0" max="1" step="0.1" value="1.0" 
+                                               oninput="updateStrengthValue(this.value)">
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="number" class="form-control form-control-sm" 
+                                               id="strengthValue" min="0" max="1" step="0.1" value="1.0"
+                                               onchange="updateStrengthSlider(this.value)">
+                                    </div>
+                                </div>
+                                <div class="form-text">
+                                    ⚖️ 控制强度：1.0贴近原视频动作和构图，0.0生成内容更自由（默认1.0）
+                                </div>
+                            </div>
+                            
+                            <!-- 参考图片（可选） -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="fas fa-image me-1"></i>
+                                    🖼️ 参考图片URL <span class="text-muted">(可选)</span>
+                                </label>
+                                <input type="url" class="form-control" id="videoRepaintRefImage" 
+                                       placeholder="https://example.com/reference-image.jpg"
+                                       onchange="previewVideoRepaintRefImage()">
+                                <div class="form-text">
+                                    🖼️ 可选：用于替换视频中的主体内容<br>
+                                    • 仅支持1张参考图像<br>
+                                    • 建议为主体图像，用于替换输入视频中的主体内容<br>
+                                    • 背景建议为纯色（如白色），以便更好地突出主体<br>
+                                    • 格式：JPG、JPEG、PNG、BMP、TIFF、WEBP<br>
+                                    • 分辨率：宽度和高度范围为[360, 2000]像素<br>
+                                    • 大小：不超过10MB
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- 参数设置 -->
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -418,7 +556,7 @@
                                     ⚙️ 高级参数（可选）
                                 </h6>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-check form-switch mb-3">
                                             <input class="form-check-input" type="checkbox" id="promptExtend" checked>
                                             <label class="form-check-label" for="promptExtend">
@@ -427,7 +565,16 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="watermark">
+                                            <label class="form-check-label" for="watermark">
+                                                <strong>💧 添加水印</strong>
+                                                <div class="form-text">🏷️ 在视频右下角添加"AI生成"水印标识</div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <label class="form-label">
                                             <i class="fas fa-dice me-1"></i>
                                             🎲 随机数种子
@@ -479,6 +626,26 @@
                                 <i class="fas fa-images fa-3x text-muted mb-3"></i>
                                 <p class="text-muted mb-0">🎬 尾帧图片预览</p>
                                 <small class="text-muted">请输入结束帧图片URL进行预览</small>
+                            </div>
+
+                            <!-- 参考图片预览区域 -->
+                            <div id="refImagesPreviewContainer" style="display: none;">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-images me-2"></i>
+                                    🖼️ 参考图片预览
+                                </h6>
+                                <div id="refImagesPreviews">
+                                    <!-- 动态生成的预览框会在这里 -->
+                                </div>
+                            </div>
+
+                            <!-- 视频预览 -->
+                            <div class="preview-container" id="videoPreviewContainer" style="display: none;">
+                                <div id="videoPreview">
+                                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted mb-0">🎬 输入视频预览</p>
+                                    <small class="text-muted">请输入视频URL进行预览</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -627,13 +794,23 @@
             const endImagePreview = document.getElementById('endImagePreview');
             const imageUrlContainer = document.getElementById('imageUrl').parentElement;
             const imagePreviewCard = document.getElementById('imagePreview').closest('.card'); // 图片预览卡片
+            const refImagesContainer = document.getElementById('refImagesContainer');
+            const refImagesPreviewContainer = document.getElementById('refImagesPreviewContainer');
+            const videoUrlContainer = document.getElementById('videoUrlContainer');
+            const videoPreviewContainer = document.getElementById('videoPreviewContainer');
             const pageTitle = document.getElementById('page-title');
             const modelSelect = document.getElementById('model');
             
+            // 先隐藏所有条件显示的元素
+            endImageContainer.style.display = 'none';
+            endImagePreview.style.display = 'none';
+            refImagesContainer.style.display = 'none';
+            refImagesPreviewContainer.style.display = 'none';
+            videoUrlContainer.style.display = 'none';
+            videoPreviewContainer.style.display = 'none';
+            
             if (taskType === 't2v') {
                 // 文生视频模式
-                endImageContainer.style.display = 'none';
-                endImagePreview.style.display = 'none';
                 imageUrlContainer.style.display = 'none'; // 隐藏图片输入
                 if (imagePreviewCard) {
                     imagePreviewCard.style.display = 'none'; // 隐藏整个图片预览卡片
@@ -646,10 +823,16 @@
                     <option value="wanx2.1-t2v-plus">✨ wanx2.1-t2v-plus (高质量生成)</option>
                 `;
             } else if (taskType === 'i2v-keyframes') {
+                // 首尾帧模式
                 endImageContainer.style.display = 'block';
                 endImagePreview.style.display = 'block';
                 imageUrlContainer.style.display = 'block';
                 if (imagePreviewCard) {
+                    // 恢复首帧图片预览的显示
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (imagePreview) {
+                        imagePreview.style.display = 'block';
+                    }
                     imagePreviewCard.style.display = 'block'; // 显示图片预览卡片
                 }
                 pageTitle.textContent = '🎭 通义万相 - 首尾帧视频生成';
@@ -659,11 +842,58 @@
                     <option value="wanx2.1-i2v-plus">✨ wanx2.1-i2v-plus (高质量模式)</option>
                 `;
                 modelSelect.value = 'wanx2.1-i2v-plus';
+            } else if (taskType === 'image_reference') {
+                // 多图参考生成模式
+                refImagesContainer.style.display = 'block';
+                refImagesPreviewContainer.style.display = 'block';
+                imageUrlContainer.style.display = 'none'; // 隐藏单图输入
+                if (imagePreviewCard) {
+                    // 隐藏首帧图片预览，只显示参考图片预览区域
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (imagePreview) {
+                        imagePreview.style.display = 'none';
+                    }
+                    imagePreviewCard.style.display = 'block'; // 显示预览卡片
+                }
+                pageTitle.textContent = '🎬 通用视频编辑 - 多图参考生成';
+                
+                // 多图参考生成只支持vace-plus模型
+                modelSelect.innerHTML = `
+                    <option value="wanx2.1-vace-plus">🎬 wanx2.1-vace-plus (通用视频编辑)</option>
+                `;
+                modelSelect.value = 'wanx2.1-vace-plus';
+                
+                // 初始化参考图片预览
+                initRefImagesPreviews();
+            } else if (taskType === 'video_repainting') {
+                // 视频重绘模式
+                videoUrlContainer.style.display = 'block';
+                videoPreviewContainer.style.display = 'block';
+                imageUrlContainer.style.display = 'none'; // 隐藏图片输入
+                if (imagePreviewCard) {
+                    // 隐藏首帧图片预览，显示视频预览
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (imagePreview) {
+                        imagePreview.style.display = 'none';
+                    }
+                    imagePreviewCard.style.display = 'block'; // 显示预览卡片（用于视频预览）
+                }
+                pageTitle.textContent = '🎬 通用视频编辑 - 视频重绘';
+                
+                // 视频重绘只支持vace-plus模型
+                modelSelect.innerHTML = `
+                    <option value="wanx2.1-vace-plus">🎬 wanx2.1-vace-plus (通用视频编辑)</option>
+                `;
+                modelSelect.value = 'wanx2.1-vace-plus';
             } else {
-                endImageContainer.style.display = 'none';
-                endImagePreview.style.display = 'none';
+                // 基于首帧生成模式
                 imageUrlContainer.style.display = 'block';
                 if (imagePreviewCard) {
+                    // 恢复首帧图片预览的显示
+                    const imagePreview = document.getElementById('imagePreview');
+                    if (imagePreview) {
+                        imagePreview.style.display = 'block';
+                    }
                     imagePreviewCard.style.display = 'block'; // 显示图片预览卡片
                 }
                 pageTitle.textContent = '🎨 通义万相 - 图生视频';
@@ -773,6 +1003,32 @@
                 resolutionSelect.innerHTML = `
                     <option value="720P" selected>720P (1280×720)</option>
                 `;
+                
+            } else if (model === 'wanx2.1-vace-plus') {
+                description.innerHTML = `
+                    <strong>🎬 wanx2.1-vace-plus:</strong> 
+                    通用视频编辑模型，支持多图参考生成和视频重绘，提供多种分辨率选择。
+                    <div class="mt-2">
+                        <span class="feature-badge">🚀 5秒时长</span>
+                        <span class="feature-badge">📺 多种比例</span>
+                        <span class="feature-badge">🎬 视频编辑</span>
+                        <span class="feature-badge">🖼️ 多图参考</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 通用视频编辑支持多种分辨率
+                resolutionSelect.innerHTML = `
+                    <option value="1280*720" selected>720P (1280×720) - 16:9</option>
+                    <option value="720*1280">720P (720×1280) - 9:16</option>
+                    <option value="960*960">720P (960×960) - 1:1</option>
+                    <option value="832*1088">720P (832×1088) - 3:4</option>
+                    <option value="1088*832">720P (1088×832) - 4:3</option>
+                `;
             }
         }
 
@@ -854,6 +1110,7 @@
             const imageUrl = document.getElementById('imageUrl').value.trim();
             const taskType = document.getElementById('taskType').value;
             const endImageUrl = document.getElementById('endImageUrl').value.trim();
+            const videoUrl = document.getElementById('videoUrl').value.trim();
             
             if (!prompt) {
                 alert('❌ 请输入文本描述');
@@ -863,8 +1120,50 @@
             // 根据任务类型验证不同的必填字段
             if (taskType === 't2v') {
                 // 文生视频不需要图片
+            } else if (taskType === 'image_reference') {
+                // 多图参考生成需要参考图片
+                const refImageUrls = [];
+                const objOrBgTypes = [];
+                const refImageInputs = document.querySelectorAll('.ref-image-url');
+                const objOrBgSelects = document.querySelectorAll('.obj-or-bg-select');
+                
+                refImageInputs.forEach((input, index) => {
+                    const url = input.value.trim();
+                    if (url) {
+                        refImageUrls.push(url);
+                        // 获取对应的图片类型
+                        const objOrBgSelect = objOrBgSelects[index];
+                        if (objOrBgSelect) {
+                            objOrBgTypes.push(objOrBgSelect.value);
+                        } else {
+                            objOrBgTypes.push('obj'); // 默认为主体
+                        }
+                    }
+                });
+                
+                if (refImageUrls.length === 0) {
+                    alert('❌ 多图参考生成至少需要输入一张参考图片URL');
+                    return;
+                }
+                
+                if (refImageUrls.length > 3) {
+                    alert('❌ 参考图片最多支持3张，超过部分将被忽略');
+                }
+                
+                // 验证背景图片数量
+                const bgCount = objOrBgTypes.filter(type => type === 'bg').length;
+                if (bgCount > 1) {
+                    alert('❌ 最多只能有一张背景图片');
+                    return;
+                }
+            } else if (taskType === 'video_repainting') {
+                // 视频重绘需要视频URL
+                if (!videoUrl) {
+                    alert('❌ 视频重绘需要提供输入视频URL');
+                    return;
+                }
             } else {
-                // 图生视频需要图片
+                // 其他图生视频需要图片
                 if (!imageUrl) {
                     alert('❌ 请输入首帧图片URL');
                     return;
@@ -883,13 +1182,62 @@
                 prompt: prompt,
                 duration: parseInt(document.getElementById('duration').value),
                 resolution: document.getElementById('resolution').value,
-                prompt_extend: document.getElementById('promptExtend').checked
+                prompt_extend: document.getElementById('promptExtend').checked,
+                watermark: document.getElementById('watermark').checked
             };
             
-            // 根据任务类型添加相应的图片字段
+            // 根据任务类型添加相应的字段
             if (taskType === 't2v') {
                 // 文生视频不需要图片字段
+            } else if (taskType === 'image_reference') {
+                // 多图参考生成
+                const refImageUrls = [];
+                const objOrBgTypes = [];
+                const refImageInputs = document.querySelectorAll('.ref-image-url');
+                const objOrBgSelects = document.querySelectorAll('.obj-or-bg-select');
+                
+                refImageInputs.forEach((input, index) => {
+                    const url = input.value.trim();
+                    if (url) {
+                        refImageUrls.push(url);
+                        // 获取对应的图片类型
+                        const objOrBgSelect = objOrBgSelects[index];
+                        if (objOrBgSelect) {
+                            objOrBgTypes.push(objOrBgSelect.value);
+                        } else {
+                            objOrBgTypes.push('obj'); // 默认为主体
+                        }
+                    }
+                });
+                
+                requestData.ref_images_url = refImageUrls.slice(0, 3); // 最多取前3张
+                if (objOrBgTypes.length > 0) {
+                    requestData.obj_or_bg = objOrBgTypes.slice(0, 3); // 与ref_images_url对应
+                }
+            } else if (taskType === 'video_repainting') {
+                // 视频重绘需要验证额外参数
+                const controlCondition = document.getElementById('controlCondition').value;
+                if (!controlCondition) {
+                    alert('❌ 请选择特征提取方式');
+                    return;
+                }
+                
+                requestData.video_url = videoUrl;
+                requestData.control_condition = controlCondition;
+                
+                // 获取控制强度（可选）
+                const strength = parseFloat(document.getElementById('strength').value);
+                if (!isNaN(strength)) {
+                    requestData.strength = strength;
+                }
+                
+                // 获取参考图片（可选，最多1张）
+                const videoRepaintRefImage = document.getElementById('videoRepaintRefImage').value.trim();
+                if (videoRepaintRefImage) {
+                    requestData.ref_images_url = [videoRepaintRefImage];
+                }
             } else {
+                // 其他图生视频模式
                 requestData.image_url = imageUrl;
                 if (taskType === 'i2v-keyframes') {
                     requestData.end_image_url = endImageUrl;
@@ -1012,6 +1360,213 @@
             resetToDefault();
         }
 
+        // 初始化参考图片预览
+        function initRefImagesPreviews() {
+            const previewContainer = document.getElementById('refImagesPreviews');
+            previewContainer.innerHTML = `
+                <div class="preview-container" id="refImagePreview0">
+                    <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">🖼️ 参考图片1预览</p>
+                    <small class="text-muted">请输入参考图片URL进行预览</small>
+                </div>
+            `;
+        }
+
+        // 添加参考图片输入框
+        function addRefImage() {
+            const refImagesList = document.getElementById('refImagesList');
+            const existingItems = refImagesList.querySelectorAll('.ref-image-item');
+            
+            if (existingItems.length >= 3) {
+                alert('❌ 最多只能添加3张参考图片');
+                return;
+            }
+            
+            const index = existingItems.length;
+            const newItem = document.createElement('div');
+            newItem.className = 'ref-image-item mb-3';
+            newItem.innerHTML = `
+                <div class="row align-items-top">
+                    <div class="col-8">
+                        <input type="url" class="form-control ref-image-url" 
+                            placeholder="https://example.com/ref-image-${index + 1}.jpg" 
+                            onchange="previewRefImage(this, ${index})">
+                        <div class="form-text">📎 参考图片${index + 1}（建议每张图像中仅包含一个主体，背景建议为纯色）</div>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label form-label-sm mb-1">类型</label>
+                        <select class="form-select form-select-sm obj-or-bg-select">
+                            <option value="obj">主体</option>
+                            <option value="bg">背景</option>
+                        </select>
+                    </div>
+                    <div class="col-2">
+                        <label class="form-label form-label-sm mb-1" style="visibility: hidden;">操作</label>
+                        <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeRefImage(${index})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            refImagesList.appendChild(newItem);
+            
+            // 添加对应的预览框
+            const previewContainer = document.getElementById('refImagesPreviews');
+            const previewDiv = document.createElement('div');
+            previewDiv.className = 'preview-container mb-3';
+            previewDiv.id = `refImagePreview${index}`;
+            previewDiv.innerHTML = `
+                <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                <p class="text-muted mb-0">🖼️ 参考图片${index + 1}预览</p>
+                <small class="text-muted">请输入参考图片URL进行预览</small>
+            `;
+            previewContainer.appendChild(previewDiv);
+            
+            // 更新按钮状态
+            updateAddButtonState();
+            updateRemoveButtonsState();
+        }
+
+        // 移除参考图片输入框
+        function removeRefImage(index) {
+            const refImagesList = document.getElementById('refImagesList');
+            const items = refImagesList.querySelectorAll('.ref-image-item');
+            
+            if (items.length <= 1) {
+                alert('❌ 至少需要保留一个参考图片输入框');
+                return;
+            }
+            
+            // 移除输入框
+            items[index].remove();
+            
+            // 移除预览框
+            const previewElement = document.getElementById(`refImagePreview${index}`);
+            if (previewElement) {
+                previewElement.remove();
+            }
+            
+            // 重新索引
+            reindexRefImages();
+            
+            // 更新按钮状态
+            updateAddButtonState();
+            updateRemoveButtonsState();
+        }
+
+        // 重新索引参考图片
+        function reindexRefImages() {
+            const refImagesList = document.getElementById('refImagesList');
+            const items = refImagesList.querySelectorAll('.ref-image-item');
+            const previewContainer = document.getElementById('refImagesPreviews');
+            const previews = previewContainer.querySelectorAll('.preview-container');
+            
+            items.forEach((item, newIndex) => {
+                const input = item.querySelector('.ref-image-url');
+                const helpText = item.querySelector('.form-text');
+                const removeBtn = item.querySelector('.btn-outline-danger');
+                
+                input.placeholder = `https://example.com/ref-image-${newIndex + 1}.jpg`;
+                input.setAttribute('onchange', `previewRefImage(this, ${newIndex})`);
+                helpText.textContent = `📎 参考图片${newIndex + 1}（建议每张图像中仅包含一个主体，背景建议为纯色）`;
+                removeBtn.setAttribute('onclick', `removeRefImage(${newIndex})`);
+            });
+            
+            previews.forEach((preview, newIndex) => {
+                preview.id = `refImagePreview${newIndex}`;
+                const title = preview.querySelector('p');
+                if (title) {
+                    title.textContent = `🖼️ 参考图片${newIndex + 1}预览`;
+                }
+            });
+        }
+
+        // 更新添加按钮状态
+        function updateAddButtonState() {
+            const addBtn = document.getElementById('addRefImageBtn');
+            const existingItems = document.getElementById('refImagesList').querySelectorAll('.ref-image-item');
+            addBtn.style.display = existingItems.length >= 3 ? 'none' : 'inline-block';
+        }
+
+        // 更新删除按钮状态
+        function updateRemoveButtonsState() {
+            const items = document.getElementById('refImagesList').querySelectorAll('.ref-image-item');
+            items.forEach((item, index) => {
+                const removeBtn = item.querySelector('.btn-outline-danger');
+                removeBtn.style.display = items.length > 1 ? 'block' : 'none';
+            });
+        }
+
+        // 预览参考图片
+        function previewRefImage(input, index) {
+            const url = input.value.trim();
+            const previewDiv = document.getElementById(`refImagePreview${index}`);
+            
+            if (url && isValidImageUrl(url)) {
+                previewDiv.innerHTML = `
+                    <img src="${url}" class="image-preview" alt="参考图片${index + 1}" 
+                         onerror="this.parentElement.innerHTML='<i class=\\'fas fa-exclamation-triangle fa-2x text-warning mb-2\\'></i><p class=\\'text-warning mb-0\\'>⚠️ 图片加载失败</p><small class=\\'text-muted\\'>请检查URL是否正确</small>'">
+                `;
+                previewDiv.classList.add('has-content');
+            } else if (url) {
+                previewDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <p class="text-warning mb-0">⚠️ 无效的图片URL</p>
+                    <small class="text-muted">请提供有效的图片链接</small>
+                `;
+                previewDiv.classList.remove('has-content');
+            } else {
+                previewDiv.innerHTML = `
+                    <i class="fas fa-image fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">🖼️ 参考图片${index + 1}预览</p>
+                    <small class="text-muted">请输入参考图片URL进行预览</small>
+                `;
+                previewDiv.classList.remove('has-content');
+            }
+        }
+
+        // 预览视频
+        function previewVideo() {
+            const url = document.getElementById('videoUrl').value.trim();
+            const previewDiv = document.getElementById('videoPreview');
+            
+            if (url && isValidVideoUrl(url)) {
+                previewDiv.innerHTML = `
+                    <video controls class="video-preview" style="max-width: 100%; max-height: 300px; border-radius: 12px;">
+                        <source src="${url}" type="video/mp4">
+                        您的浏览器不支持视频播放
+                    </video>
+                `;
+                document.getElementById('videoPreviewContainer').classList.add('has-content');
+            } else if (url) {
+                previewDiv.innerHTML = `
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <p class="text-warning mb-0">⚠️ 无效的视频URL</p>
+                    <small class="text-muted">请提供有效的MP4视频链接</small>
+                `;
+                document.getElementById('videoPreviewContainer').classList.remove('has-content');
+            } else {
+                previewDiv.innerHTML = `
+                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                    <p class="text-muted mb-0">🎬 输入视频预览</p>
+                    <small class="text-muted">请输入视频URL进行预览</small>
+                `;
+                document.getElementById('videoPreviewContainer').classList.remove('has-content');
+            }
+        }
+
+        // 验证视频URL
+        function isValidVideoUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const ext = urlObj.pathname.toLowerCase();
+                return ext.endsWith('.mp4') || url.includes('video');
+            } catch {
+                return false;
+            }
+        }
+
         // 重置表单
         function resetForm() {
             document.getElementById('taskType').value = 'i2v-first-frame';
@@ -1019,19 +1574,86 @@
             document.getElementById('prompt').value = '';
             document.getElementById('imageUrl').value = '';
             document.getElementById('endImageUrl').value = '';
+            document.getElementById('videoUrl').value = '';
             document.getElementById('duration').value = '5';
             document.getElementById('resolution').value = '720P';
             document.getElementById('promptExtend').checked = true;
+            document.getElementById('watermark').checked = false;
             document.getElementById('seed').value = '';
+            
+            // 重置参考图片
+            const refImagesList = document.getElementById('refImagesList');
+            refImagesList.innerHTML = `
+                <div class="ref-image-item mb-3">
+                    <div class="row align-items-top">
+                        <div class="col-8">
+                            <input type="url" class="form-control ref-image-url" 
+                                placeholder="https://example.com/ref-image-1.jpg" 
+                                onchange="previewRefImage(this, 0)">
+                            <div class="form-text">📎 参考图片1（建议每张图像中仅包含一个主体，背景建议为纯色）</div>
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label form-label-sm mb-1">类型</label>
+                            <select class="form-select form-select-sm obj-or-bg-select">
+                                <option value="obj">主体</option>
+                                <option value="bg">背景</option>
+                            </select>
+                        </div>
+                        <div class="col-2">
+                            <label class="form-label form-label-sm mb-1" style="visibility: hidden;">操作</label>
+                            <button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="removeRefImage(0)" style="display: none;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
             
             // 重置预览
             previewImage('imageUrl', 'imagePreview');
             previewImage('endImageUrl', 'endImagePreview');
+            previewVideo();
+            initRefImagesPreviews();
+            
+            // 更新按钮状态
+            updateAddButtonState();
+            updateRemoveButtonsState();
+            
+            // 重置视频重绘参数
+            if (document.getElementById('controlCondition')) {
+                document.getElementById('controlCondition').value = 'posebodyface';
+            }
+            if (document.getElementById('strength')) {
+                document.getElementById('strength').value = '1.0';
+                document.getElementById('strengthValue').value = '1.0';
+            }
+            if (document.getElementById('videoRepaintRefImage')) {
+                document.getElementById('videoRepaintRefImage').value = '';
+            }
             
             // 重置UI状态
             onTaskTypeChange();
             updatePromptCount();
             resetToDefault();
+        }
+
+        // 更新控制强度值
+        function updateStrengthValue(value) {
+            document.getElementById('strengthValue').value = value;
+        }
+
+        // 更新控制强度滑块
+        function updateStrengthSlider(value) {
+            document.getElementById('strength').value = value;
+        }
+
+        // 预览视频重绘参考图片
+        function previewVideoRepaintRefImage() {
+            const input = document.getElementById('videoRepaintRefImage');
+            const url = input.value.trim();
+            
+            console.log('Video repaint reference image URL:', url);
+            // 可以在这里添加参考图片预览逻辑
         }
     </script>
 </body>

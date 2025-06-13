@@ -457,6 +457,8 @@
                         <option value="i2v-first-frame">🖼️ 基于首帧</option>
                         <option value="i2v-keyframes">🎭 基于首尾帧</option>
                         <option value="t2v">✍️ 文生视频</option>
+                        <option value="image_reference">🎬 通用视频编辑 - 多图参考生成</option>
+                        <option value="video_repainting">🎬 通用视频编辑 - 视频重绘</option>
                     </select>
                 </div>
                 <div class="col-md-3">
@@ -696,7 +698,9 @@
             const typeTexts = {
                 'i2v-first-frame': '🖼️ 基于首帧',
                 'i2v-keyframes': '🎭 基于首尾帧',
-                't2v': '✍️ 文生视频'
+                't2v': '✍️ 文生视频',
+                'image_reference': '🎬 通用视频编辑 - 多图参考生成',
+                'video_repainting': '🎬 通用视频编辑 - 视频重绘'
             };
             return typeTexts[taskType] || '❓ 未知类型';
         }

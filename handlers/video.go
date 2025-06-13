@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,7 +27,7 @@ func NewVideoHandler(db *gorm.DB, dashScopeService *services.DashScopeService) *
 
 // CreateVideoTask 创建视频生成任务
 func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
-	var req models.VideoGenerationRequest
+	var req models.VideoCreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误: " + err.Error()})
 		return
@@ -41,7 +42,8 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 	}
 
 	// 验证任务类型
-	if req.TaskType != "i2v-first-frame" && req.TaskType != "i2v-keyframes" && req.TaskType != "t2v" {
+	if req.TaskType != "i2v-first-frame" && req.TaskType != "i2v-keyframes" && req.TaskType != "t2v" &&
+		req.TaskType != "image_reference" && req.TaskType != "video_repainting" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "不支持的任务类型"})
 		return
 	}
@@ -50,6 +52,7 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 	validModels := []string{
 		"wanx2.1-i2v-turbo", "wanx2.1-i2v-plus",
 		"wanx2.1-t2v-turbo", "wanx2.1-t2v-plus",
+		"wanx2.1-vace-plus", // 通用视频编辑模型
 	}
 	isValidModel := false
 	for _, model := range validModels {
@@ -86,6 +89,72 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "文生视频任务只支持wanx2.1-t2v-turbo和wanx2.1-t2v-plus模型"})
 			return
 		}
+	case "image_reference":
+		if req.Model != "wanx2.1-vace-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "多图参考任务只支持wanx2.1-vace-plus模型"})
+			return
+		}
+		// 验证参考图片URL
+		if len(req.RefImagesURL) == 0 || len(req.RefImagesURL) > 3 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "多图参考任务需要提供1-3张参考图片"})
+			return
+		}
+		// 验证图片类型数组
+		if len(req.ObjOrBg) > 0 && len(req.ObjOrBg) != len(req.RefImagesURL) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "图片类型数组长度必须与图片数量一致"})
+			return
+		}
+		// 验证背景图片数量
+		bgCount := 0
+		for _, t := range req.ObjOrBg {
+			if t == "bg" {
+				bgCount++
+			}
+		}
+		if bgCount > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "最多只能有一张背景图片"})
+			return
+		}
+	case "video_repainting":
+		if req.Model != "wanx2.1-vace-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "视频重绘任务只支持wanx2.1-vace-plus模型"})
+			return
+		}
+		// 验证输入视频URL
+		if req.VideoURL == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "视频重绘任务需要提供输入视频URL"})
+			return
+		}
+		// 验证控制条件（必选）
+		if req.ControlCondition == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "视频重绘任务需要指定特征提取方式(control_condition)，这是必选参数"})
+			return
+		}
+		validConditions := []string{"posebodyface", "posebody", "depth", "scribble"}
+		isValidCondition := false
+		for _, condition := range validConditions {
+			if req.ControlCondition == condition {
+				isValidCondition = true
+				break
+			}
+		}
+		if !isValidCondition {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的特征提取方式，支持: posebodyface(脸部+肢体), posebody(仅肢体), depth(构图轮廓), scribble(线稿)"})
+			return
+		}
+		// 验证控制强度（可选，默认1.0）
+		if req.Strength == 0.0 {
+			req.Strength = 1.0 // 设置默认值
+		}
+		if req.Strength < 0.0 || req.Strength > 1.0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "控制强度必须在0.0-1.0范围内，默认为1.0"})
+			return
+		}
+		// 验证参考图片数量
+		if len(req.RefImagesURL) > 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "视频重绘任务最多只能使用1张参考图片"})
+			return
+		}
 	}
 
 	// 验证首尾帧任务的特殊要求
@@ -119,6 +188,21 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 			return
 		}
 	}
+	if req.Model == "wanx2.1-vace-plus" {
+		// 通用视频编辑模型支持多种分辨率
+		validResolutions := []string{"1280*720", "720*1280", "960*960", "832*1088", "1088*832"}
+		isValidResolution := false
+		for _, resolution := range validResolutions {
+			if req.Resolution == resolution {
+				isValidResolution = true
+				break
+			}
+		}
+		if !isValidResolution {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-vace-plus模型只支持1280*720、720*1280、960*960、832*1088、1088*832分辨率"})
+			return
+		}
+	}
 
 	// 验证时长 - 固定为5秒
 	if req.Duration != 5 {
@@ -133,12 +217,18 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 
 	// 处理分辨率大小设置
 	if req.Size == "" && req.Resolution != "" {
-		// 根据分辨率档位设置默认尺寸
-		switch req.Resolution {
-		case "480P":
-			req.Size = "832*480" // 默认16:9
-		case "720P":
-			req.Size = "1280*720" // 默认16:9
+		// 根据模型类型和分辨率设置尺寸
+		if req.Model == "wanx2.1-vace-plus" {
+			// 通用视频编辑模型直接使用resolution作为size
+			req.Size = req.Resolution
+		} else {
+			// 其他模型根据分辨率档位设置默认尺寸
+			switch req.Resolution {
+			case "480P":
+				req.Size = "832*480" // 默认16:9
+			case "720P":
+				req.Size = "1280*720" // 默认16:9
+			}
 		}
 	}
 
@@ -155,6 +245,24 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 		Size:         req.Size,
 		Seed:         req.Seed,
 		PromptExtend: req.PromptExtend,
+
+		// 新增字段支持
+		VideoURL2:        req.VideoURL,
+		ControlCondition: req.ControlCondition,
+		Strength:         req.Strength,
+		Watermark:        req.Watermark,
+	}
+
+	// 处理数组字段的JSON序列化
+	if len(req.RefImagesURL) > 0 {
+		if refImagesJSON, err := json.Marshal(req.RefImagesURL); err == nil {
+			taskRecord.RefImagesURL = string(refImagesJSON)
+		}
+	}
+	if len(req.ObjOrBg) > 0 {
+		if objOrBgJSON, err := json.Marshal(req.ObjOrBg); err == nil {
+			taskRecord.ObjOrBg = string(objOrBgJSON)
+		}
 	}
 
 	if err := h.DB.Create(&taskRecord).Error; err != nil {
@@ -277,7 +385,7 @@ func (h *VideoHandler) DeleteTask(c *gin.Context) {
 }
 
 // processVideoTask 处理视频生成任务（后台执行）
-func (h *VideoHandler) processVideoTask(taskRecord *models.TaskRequest, req *models.VideoGenerationRequest) {
+func (h *VideoHandler) processVideoTask(taskRecord *models.TaskRequest, req *models.VideoCreateRequest) {
 	// 更新状态为运行中
 	h.DB.Model(taskRecord).Update("status", "running")
 

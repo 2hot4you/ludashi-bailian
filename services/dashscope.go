@@ -40,7 +40,7 @@ func NewDashScopeService() *DashScopeService {
 }
 
 // CreateVideoGenerationTask 创建视频生成任务
-func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoGenerationRequest) (*models.DashScopeVideoResponse, error) {
+func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoCreateRequest) (*models.DashScopeVideoResponse, error) {
 	// 截断提示词到800字符
 	prompt := req.Prompt
 	if len([]rune(prompt)) > 800 {
@@ -69,6 +69,24 @@ func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoGeneration
 		}
 	case "t2v":
 		// 文生视频不需要图片输入
+	case "image_reference":
+		// 多图参考
+		taskReq.Input.Function = "image_reference"
+		taskReq.Input.RefImagesURL = req.RefImagesURL
+		if len(req.ObjOrBg) > 0 {
+			taskReq.Parameters.ObjOrBg = req.ObjOrBg
+		}
+	case "video_repainting":
+		// 视频重绘
+		taskReq.Input.Function = "video_repainting"
+		taskReq.Input.VideoURL = req.VideoURL
+		if len(req.RefImagesURL) > 0 {
+			taskReq.Input.RefImagesURL = req.RefImagesURL
+		}
+		taskReq.Parameters.ControlCondition = req.ControlCondition
+		if req.Strength > 0 {
+			taskReq.Parameters.Strength = req.Strength
+		}
 	}
 
 	// 设置分辨率参数
@@ -90,6 +108,9 @@ func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoGeneration
 	}
 	if req.Seed != nil {
 		taskReq.Parameters.Seed = req.Seed
+	}
+	if req.Watermark != nil {
+		taskReq.Parameters.Watermark = req.Watermark
 	}
 
 	// 序列化请求

@@ -31,7 +31,7 @@
 ### 后端
 - **语言**: Go 1.21+
 - **框架**: Gin Web Framework
-- **数据库**: SQLite
+- **数据库**: SQLite (GORM ORM)
 - **API**: 阿里云DashScope API
 
 ### 前端
@@ -85,9 +85,9 @@
 | 页面 | URL | 描述 |
 |------|-----|------|
 | 🏠 首页 | `/` | 平台介绍和功能入口 |
-| 🎬 视频生成 | `/video-generation` | 创建视频生成任务 |
-| 📋 历史记录 | `/history` | 查看和管理任务历史 |
-| 📄 任务详情 | `/task-detail/{id}` | 查看具体任务详情 |
+| 🎬 视频生成 | `/video-generation.html` | 统一的视频生成页面（支持首帧和首尾帧） |
+| 📋 历史记录 | `/history.html` | 查看和管理任务历史 |
+| 📄 任务详情 | `/task-detail.html` | 查看具体任务详情 |
 | ❤️ 健康检查 | `/health` | 服务健康状态 |
 
 ## 📖 API 文档
@@ -139,20 +139,22 @@ DELETE /api/video/{task_id}
 ```
 ludashi-bailian/
 ├── 📁 handlers/            # HTTP请求处理器
-│   └── video.go           
+│   └── video.go           # 视频任务相关处理
 ├── 📁 models/              # 数据模型定义
-│   └── models.go          
+│   └── models.go          # 任务和响应模型
 ├── 📁 services/            # 业务逻辑服务
-│   └── dashscope.go       
+│   └── dashscope.go       # DashScope API集成
 ├── 📁 static/              # 静态资源文件
 │   ├── index.html         # 🏠 首页
-│   ├── video-generation.html  # 🎬 视频生成页
+│   ├── video-generation.html  # 🎬 统一视频生成页
 │   ├── history.html       # 📋 历史记录页
 │   └── task-detail.html   # 📄 任务详情页
 ├── 📄 main.go              # 🚀 程序入口
 ├── 📄 go.mod              # 📦 依赖管理
-├── 📄 go.sum              
-├── 📄 README.md           
+├── 📄 go.sum              # 依赖校验
+├── 📄 README.md           # 📖 项目文档
+├── 📄 LICENSE             # 📄 开源许可证
+├── 📄 .gitignore          # 🚫 Git忽略文件
 └── 📄 bailian.db          # 🗄️ SQLite数据库(自动生成)
 ```
 
@@ -160,15 +162,15 @@ ludashi-bailian/
 
 ### 🖼️ 基于首帧生成视频
 
-1. 选择"基于首帧生成"模式
+1. 在视频生成页面选择"基于首帧生成"模式
 2. 输入图片URL或上传图片
 3. 编写描述视频内容的提示词
-4. 选择模型和参数
+4. 选择模型和参数（turbo或plus）
 5. 点击"开始生成"等待结果
 
 ### 🎭 基于首尾帧生成视频
 
-1. 选择"基于首尾帧生成"模式  
+1. 在视频生成页面选择"基于首尾帧生成"模式  
 2. 提供起始帧和结束帧图片
 3. 描述转换过程
 4. 选择plus模型(turbo不支持此模式)
@@ -272,6 +274,26 @@ Warning: DASHSCOPE_API_KEY environment variable is not set
 
 - 感谢阿里云百炼团队提供强大的AI模型服务
 - 感谢开源社区的支持和贡献
+
+## 📝 更新日志
+
+### v1.2.0 (2025-01-21)
+- 🔄 **界面优化**: 合并视频生成页面，统一首帧和首尾帧生成功能
+- 🗑️ **清理文件**: 移除分离的 `i2v-first-frame.html` 和 `i2v-keyframes.html` 页面
+- 🎨 **用户体验**: 改进页面布局和交互逻辑
+- 📱 **响应式优化**: 增强移动端适配性
+
+### v1.1.0 (2025-01-20)
+- ✨ **新增功能**: 支持基于首帧和首尾帧的视频生成
+- 🤖 **模型支持**: 集成 wanx2.1-i2v-turbo 和 wanx2.1-i2v-plus 模型
+- 📊 **任务管理**: 完整的历史记录和状态跟踪系统
+- 🎯 **API集成**: 阿里云DashScope API完全集成
+
+### v1.0.0 (2025-01-19)
+- 🎉 **首次发布**: 基础平台架构完成
+- 🏗️ **技术栈**: Go + Gin + SQLite + Bootstrap
+- 🎨 **UI设计**: 现代化响应式界面
+- 📖 **文档**: 完整的README和API文档
 
 ---
 

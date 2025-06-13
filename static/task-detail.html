@@ -532,7 +532,9 @@
             const typeTexts = {
                 'i2v-first-frame': '<span class="badge bg-info">🖼️ 基于首帧</span>',
                 'i2v-keyframes': '<span class="badge bg-primary">🎭 基于首尾帧</span>',
-                't2v': '<span class="badge bg-success">✍️ 文生视频</span>'
+                't2v': '<span class="badge bg-success">✍️ 文生视频</span>',
+                'image_reference': '<span class="badge bg-warning">🎬 通用视频编辑 - 多图参考生成</span>',
+                'video_repainting': '<span class="badge bg-dark">🎬 通用视频编辑 - 视频重绘</span>'
             };
             return typeTexts[taskType] || '<span class="badge bg-secondary">❓ ' + taskType + '</span>';
         }
