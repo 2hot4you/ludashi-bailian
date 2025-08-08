@@ -335,6 +335,7 @@
                                 <select class="form-select" id="model" onchange="onModelChange()">
                                     <option value="wanx2.1-i2v-turbo">⚡ wanx2.1-i2v-turbo (快速模式)</option>
                                     <option value="wanx2.1-i2v-plus">✨ wanx2.1-i2v-plus (高质量模式)</option>
+                                    <option value="wanx2.2-t2v-plus">🚀 wan2.2-t2v-plus (万相2.2专业版)</option>
                                 </select>
                             </div>
                         </div>
@@ -817,10 +818,11 @@
                 }
                 pageTitle.textContent = '✍️ 通义万相 - 文生视频';
                 
-                // 文生视频支持两种模型
+                // 文生视频支持多种模型
                 modelSelect.innerHTML = `
                     <option value="wanx2.1-t2v-turbo">⚡ wanx2.1-t2v-turbo (快速生成)</option>
                     <option value="wanx2.1-t2v-plus">✨ wanx2.1-t2v-plus (高质量生成)</option>
+                    <option value="wanx2.2-t2v-plus">🚀 wan2.2-t2v-plus (万相2.2专业版)</option>
                 `;
             } else if (taskType === 'i2v-keyframes') {
                 // 首尾帧模式
@@ -1004,6 +1006,27 @@
                     <option value="720P" selected>720P (1280×720)</option>
                 `;
                 
+            } else if (model === 'wanx2.2-t2v-plus') {
+                description.innerHTML = `
+                    <strong>🚀 wan2.2-t2v-plus:</strong> 
+                    万相2.2专业版，当前最新模型。在画面细节表现、运动稳定性方面均有显著提升。
+                    <div class="mt-2">
+                        <span class="feature-badge">🚀 5秒时长</span>
+                        <span class="feature-badge">📺 480P/1080P</span>
+                        <span class="feature-badge">✨ 专业版</span>
+                    </div>
+                `;
+                
+                // 更新时长选项
+                durationSelect.innerHTML = `
+                    <option value="5" selected>5秒</option>
+                `;
+                
+                // 更新分辨率选项
+                resolutionSelect.innerHTML = `
+                    <option value="480P">480P (832×480)</option>
+                    <option value="1080P" selected>1080P (1920×1080)</option>
+                `;
             } else if (model === 'wanx2.1-vace-plus') {
                 description.innerHTML = `
                     <strong>🎬 wanx2.1-vace-plus:</strong> 

@@ -94,11 +94,23 @@ func (s *DashScopeService) CreateVideoGenerationTask(req *models.VideoCreateRequ
 		taskReq.Parameters.Size = req.Size
 	} else if req.Resolution != "" {
 		// 如果没有指定具体尺寸，根据分辨率档位设置默认值
-		switch req.Resolution {
-		case "480P":
-			taskReq.Parameters.Size = "832*480" // 默认16:9
-		case "720P":
-			taskReq.Parameters.Size = "1280*720" // 默认16:9
+		switch req.Model {
+		case "wanx2.2-t2v-plus":
+			switch req.Resolution {
+			case "480P":
+				taskReq.Parameters.Size = "832*480" // 默认16:9
+			case "1080P":
+				taskReq.Parameters.Size = "1920*1080" // 默认16:9
+			}
+		case "wanx2.1-vace-plus":
+			taskReq.Parameters.Size = req.Resolution // 通用视频编辑模型直接使用resolution作为size
+		default:
+			switch req.Resolution {
+			case "480P":
+				taskReq.Parameters.Size = "832*480" // 默认16:9
+			case "720P":
+				taskReq.Parameters.Size = "1280*720" // 默认16:9
+			}
 		}
 	}
 

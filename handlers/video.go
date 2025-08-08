@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -53,6 +54,7 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 		"wanx2.1-i2v-turbo", "wanx2.1-i2v-plus",
 		"wanx2.1-t2v-turbo", "wanx2.1-t2v-plus",
 		"wanx2.1-vace-plus", // 通用视频编辑模型
+		"wanx2.2-t2v-plus", // 通义万相2.2专业版 - 文生视频
 	}
 	isValidModel := false
 	for _, model := range validModels {
@@ -85,8 +87,8 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 			return
 		}
 	case "t2v":
-		if req.Model != "wanx2.1-t2v-turbo" && req.Model != "wanx2.1-t2v-plus" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "文生视频任务只支持wanx2.1-t2v-turbo和wanx2.1-t2v-plus模型"})
+		if req.Model != "wanx2.1-t2v-turbo" && req.Model != "wanx2.1-t2v-plus" && req.Model != "wanx2.2-t2v-plus" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "文生视频任务只支持wanx2.1-t2v-turbo, wanx2.1-t2v-plus 和 wanx2.2-t2v-plus 模型"})
 			return
 		}
 	case "image_reference":
@@ -170,36 +172,30 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 	}
 
 	// 验证分辨率
-	if req.Model == "wanx2.1-i2v-turbo" || req.Model == "wanx2.1-t2v-turbo" {
-		if req.Resolution != "480P" && req.Resolution != "720P" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "turbo模型只支持480P和720P分辨率"})
-			return
+	if req.Resolution != "" {
+		supportedResolutions := map[string][]string{
+			"wanx2.1-i2v-turbo": {"480P", "720P"},
+			"wanx2.1-i2v-plus":  {"720P"},
+			"wanx2.1-t2v-turbo": {"480P", "720P"},
+			"wanx2.1-t2v-plus":  {"720P"},
+			"wanx2.1-vace-plus": {"1280*720", "720*1280", "960*960", "832*1088", "1088*832"}, // For VACE-Plus, resolution is the exact size
+			"wanx2.2-t2v-plus":  {"480P", "1080P"},                                           // New model resolutions
 		}
-	}
-	if req.Model == "wanx2.1-i2v-plus" {
-		if req.Resolution != "720P" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-i2v-plus模型只支持720P分辨率"})
-			return
-		}
-	}
-	if req.Model == "wanx2.1-t2v-plus" {
-		if req.Resolution != "720P" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-t2v-plus模型只支持720P分辨率"})
-			return
-		}
-	}
-	if req.Model == "wanx2.1-vace-plus" {
-		// 通用视频编辑模型支持多种分辨率
-		validResolutions := []string{"1280*720", "720*1280", "960*960", "832*1088", "1088*832"}
-		isValidResolution := false
-		for _, resolution := range validResolutions {
-			if req.Resolution == resolution {
-				isValidResolution = true
-				break
+
+		if resolutions, ok := supportedResolutions[req.Model]; ok {
+			isSupported := false
+			for _, res := range resolutions {
+				if req.Resolution == res {
+					isSupported = true
+					break
+				}
 			}
-		}
-		if !isValidResolution {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "wanx2.1-vace-plus模型只支持1280*720、720*1280、960*960、832*1088、1088*832分辨率"})
+			if !isSupported {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("模型 %s 不支持分辨率 %s", req.Model, req.Resolution)})
+				return
+			}
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("模型 %s 的分辨率列表未定义", req.Model)})
 			return
 		}
 	}
@@ -217,17 +213,25 @@ func (h *VideoHandler) CreateVideoTask(c *gin.Context) {
 
 	// 处理分辨率大小设置
 	if req.Size == "" && req.Resolution != "" {
-		// 根据模型类型和分辨率设置尺寸
 		if req.Model == "wanx2.1-vace-plus" {
-			// 通用视频编辑模型直接使用resolution作为size
-			req.Size = req.Resolution
-		} else {
-			// 其他模型根据分辨率档位设置默认尺寸
+			req.Size = req.Resolution // For VACE-Plus, resolution is directly the size
+		} else if req.Model == "wanx2.2-t2v-plus" { // Handle wanx2.2-t2v-plus specific sizes
 			switch req.Resolution {
 			case "480P":
-				req.Size = "832*480" // 默认16:9
+				req.Size = "832*480" // Example default size for 480P
+			case "1080P":
+				req.Size = "1920*1080" // Example default size for 1080P
+			default:
+				// Fallback or error if resolution doesn't match expected for wanx2.2-t2v-plus
+				req.Size = "1920*1080" // Default to 1080P if not specified or unrecognized
+			}
+		} else {
+			// Other models use default sizes based on resolution tier
+			switch req.Resolution {
+			case "480P":
+				req.Size = "832*480"
 			case "720P":
-				req.Size = "1280*720" // 默认16:9
+				req.Size = "1280*720"
 			}
 		}
 	}
